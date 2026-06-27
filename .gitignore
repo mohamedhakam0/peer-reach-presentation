@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.env
+*.log
+.DS_Store
+*.zip
+fix*.cjs
+package-lock.json
+peer-reach-deploy/
