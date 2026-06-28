@@ -1,29 +1,138 @@
 import { useEffect, useRef, useState } from 'react';
 
-const DEEP_BLACK = '#050508';
-const WHITE = '#f6f8ff';
-const CYAN = '#00bcd4';
-const GOLD = '#f0a500';
-const GREEN = '#22c55e';
-const PURPLE = '#c084fc';
+const DEEP_BLACK = 'var(--intro-bg)';
+const WHITE = 'var(--intro-text)';
+const CYAN = 'var(--intro-cyan)';
+const GOLD = 'var(--intro-gold)';
+const GREEN = 'var(--intro-green)';
+const PURPLE = 'var(--intro-purple)';
+
+function ThemeToggle() {
+  const [light, setLight] = useState(() =>
+    document.documentElement.classList.contains('light-mode')
+  );
+
+  const toggle = () => {
+    const next = !light;
+    document.documentElement.classList.toggle('light-mode', next);
+    localStorage.setItem('intro-theme', next ? 'light' : 'dark');
+    setLight(next);
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem('intro-theme');
+    if (saved === 'light') {
+      document.documentElement.classList.add('light-mode');
+      setLight(true);
+    }
+  }, []);
+
+  return (
+    <button
+      onClick={toggle}
+      aria-label="Toggle light / dark mode"
+      style={{
+        position: 'fixed',
+        top: 18,
+        right: 18,
+        zIndex: 9999,
+        width: 40,
+        height: 40,
+        borderRadius: '50%',
+        border: '1px solid var(--intro-border)',
+        background: 'var(--intro-surface-hard)',
+        color: 'var(--intro-text)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 18,
+        backdropFilter: 'blur(8px)',
+        transition: 'background 200ms, border-color 200ms',
+      }}
+    >
+      {light ? '🌙' : '☀️'}
+    </button>
+  );
+}
 
 const INTRO_SECTION_IDS = [
-  'cover',
-  'hook-abstract',
-  'hook-problem',
-  'hook-insight',
-  'hook-range',
-  'hook-solution',
-  'hook-related',
-  'hook-components',
-  'hook-demo',
-  'hook-architecture',
-  'hook-packet',
-  'hook-numbers',
-  'hook-security',
-  'hook-security-deep',
-  'hook-transition',
+  'cover',                    // 0
+  'hook-agenda',              // 1
+  'hook-abstract',            // 2
+  'hook-problem',             // 3
+  'hook-insight',             // 4
+  'hook-range',               // 5
+  'hook-solution',            // 6
+  'hook-architecture',        // 7
+  'hook-components',          // 8
+  'hook-demo',                // 9
+  'hook-packet',              // 10
+  'hook-flooding',            // 11
+  'hook-security',            // 12
+  'hook-security-scenarios',  // 13
+  'hook-security-deep',       // 14
+  'hook-numbers',             // 15
+  'hook-related',             // 16
+  'hook-transition',          // 17
 ] as const;
+
+const TOTAL_SLIDES = INTRO_SECTION_IDS.length;
+
+// ─── Slide number indicator ────────────────────────────────────────────────────
+function SlideNumber({ current }: { current: number }) {
+  const n = String(current + 1).padStart(2, '0');
+  const total = String(TOTAL_SLIDES).padStart(2, '0');
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: 22,
+      left: 24,
+      zIndex: 9999,
+      fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+      fontSize: 11,
+      letterSpacing: '0.12em',
+      color: 'var(--intro-text-faint)',
+      userSelect: 'none',
+      pointerEvents: 'none',
+    }}>
+      {n}<span style={{ opacity: 0.4, margin: '0 4px' }}>/</span>{total}
+    </div>
+  );
+}
+
+// ─── Agenda slide ─────────────────────────────────────────────────────────────
+const AGENDA_ITEMS = [
+  { num: '03',    label: 'Thesis Overview',    desc: 'Abstract and research contributions' },
+  { num: '04',    label: 'Problem Statement',  desc: 'Communication failures in infrastructure-less environments' },
+  { num: '05–07', label: 'Background',         desc: 'Objectives · BLE range limitation · proposed solution' },
+  { num: '08',    label: 'System Model',       desc: 'Full network topology and architecture' },
+  { num: '09–10', label: 'System & Demo',      desc: 'Hardware components · live app walkthrough' },
+  { num: '11',    label: 'Packet Design',      desc: 'Protocol structure · 42-byte header · AES-128-GCM' },
+  { num: '12–14', label: 'Security',           desc: 'Security design · attack scenarios · threat model' },
+  { num: '15',    label: 'Key Results',        desc: 'Range · latency · throughput · hop count' },
+  { num: '16',    label: 'Comparison',         desc: 'Peer Reach vs. Meshtastic, Bridgefy, GoTenna' },
+];
+
+function AgendaSlide() {
+  return (
+    <div className="agenda-slide">
+      <div className="hook-label">TABLE OF CONTENTS</div>
+      <h2 className="agenda-title">Agenda</h2>
+      <ol className="agenda-list">
+        {AGENDA_ITEMS.map((item, i) => (
+          <li key={item.num} className="agenda-item" style={{ '--ai': i } as React.CSSProperties}>
+            <span className="agenda-num">{item.num}</span>
+            <div className="agenda-body">
+              <span className="agenda-label">{item.label}</span>
+              <span className="agenda-desc">{item.desc}</span>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
 
 // ─── Ambient background (cover slide) ─────────────────────────────────────────
 function AmbientBackground() {
@@ -161,7 +270,7 @@ function RangeFailureAnimation() {
       <line x1="492" y1="134" x2="552" y2="104" stroke={CYAN} strokeWidth="1.6" opacity="0.7" />
       <line x1="250" y1="118" x2="388" y2="118" stroke="#ef4444" strokeWidth="1.2" strokeDasharray="5 7" opacity="0.55" className="gap-pulse-fail" />
       <circle cx="250" cy="118" r="5" fill="#ff7f7f" className="packet-fail" />
-      <text x="319" y="168" textAnchor="middle" fill="#ef4444" fontSize="10" opacity="0.7" fontFamily="var(--font-mono, monospace)" letterSpacing="0.08em">~30 m MAX RANGE</text>
+      <text x="319" y="168" textAnchor="middle" fill="#ef4444" fontSize="10" opacity="0.7" fontFamily="var(--font-mono, monospace)" letterSpacing="0.08em">~20 m MAX RANGE</text>
     </svg>
   );
 }
@@ -184,7 +293,7 @@ function SolutionAnimation() {
       <line x1="250" y1="118" x2="388" y2="118" stroke={GOLD} strokeWidth="2" strokeDasharray="6 6" className="gap-pulse-success" />
       <circle cx="250" cy="118" r="5" fill={GOLD} className="packet-success" />
       <circle cx="540" cy="104" r="18" fill="none" stroke={GREEN} strokeWidth="1.8" className="deliver-pulse" />
-      <text x="319" y="168" textAnchor="middle" fill={GOLD} fontSize="10" opacity="0.8" fontFamily="var(--font-mono, monospace)" letterSpacing="0.08em">1,500 m PROVEN · UP TO 3 km LOS</text>
+      <text x="319" y="168" textAnchor="middle" fill={GOLD} fontSize="10" opacity="0.8" fontFamily="var(--font-mono, monospace)" letterSpacing="0.08em">1,500 m RADIUS OF COVERAGE</text>
     </svg>
   );
 }
@@ -256,7 +365,7 @@ const COMPONENT_SPECS: Record<ComponentKey, {
     icon: '/icons/phone_3d.png',
     params: [
       { key: 'Radio',             value: 'BLE 5.0 LE Coded PHY' },
-      { key: 'Per-hop range',     value: '~30 m (indoor tested)' },
+      { key: 'Per-hop range',     value: '~20 m (indoor tested)' },
       { key: 'Protocol role',     value: 'Message origin · BLE flood relay' },
       { key: 'Advertising',       value: 'Connectionless BLE advertisements' },
       { key: 'Dedup buffer',      value: 'seen_msg_ids ring buffer — 200 entries' },
@@ -278,7 +387,7 @@ const COMPONENT_SPECS: Record<ComponentKey, {
       { key: 'Radio B',           value: 'SPI → Semtech SX1276 LoRa module' },
       { key: 'Protocol role',     value: 'Stateless BLE ↔ LoRa bridge' },
       { key: 'Session state',     value: 'None — pure relay, no storage' },
-      { key: 'BLE range',         value: '~30 m per hop' },
+      { key: 'BLE range',         value: '~20 m per hop' },
       { key: 'Framework',         value: 'ESP-IDF' },
       { key: 'Power supply',      value: '3.3 V via USB or LiPo battery' },
       { key: 'Throughput',        value: 'Governed by LoRa duty cycle (1 %)' },
@@ -410,66 +519,65 @@ function ComponentsCards({
 
 // ─── Slide 9: System Architecture ────────────────────────────────────────────
 function ArchitectureDiagram({ active }: { active: boolean }) {
+  const PH = 56;  // phone icon size (matches SimulationCanvas)
+  const EH = 52;  // esp32 icon size
+  const LH = 52;  // lora icon size
+  const phones = [
+    { cx: 68,  cy: 100 },
+    { cx: 68,  cy: 220 },
+    { cx: 126, cy: 160 },
+    { cx: 754, cy: 100 },
+    { cx: 754, cy: 220 },
+    { cx: 812, cy: 160 },
+  ];
   return (
-    <svg className="arch-svg" viewBox="0 0 880 320" aria-hidden="true">
+    <svg className="arch-svg" viewBox="0 0 880 330" aria-hidden="true">
       {/* ── Cluster A ── */}
-      {/* Phone nodes */}
-      <circle cx="68"  cy="110" r="16" fill="none" stroke={WHITE} strokeWidth="1.6" opacity="0.85" />
-      <circle cx="68"  cy="210" r="16" fill="none" stroke={WHITE} strokeWidth="1.6" opacity="0.85" />
-      <circle cx="116" cy="160" r="16" fill="none" stroke={WHITE} strokeWidth="1.6" opacity="0.85" />
-      {/* BLE rings on phones (subtle) */}
-      <circle cx="68"  cy="110" r="28" stroke={CYAN} strokeWidth="0.6" fill="none" opacity="0.2" />
-      <circle cx="68"  cy="210" r="28" stroke={CYAN} strokeWidth="0.6" fill="none" opacity="0.2" />
-      <circle cx="116" cy="160" r="28" stroke={CYAN} strokeWidth="0.6" fill="none" opacity="0.2" />
-      {/* BLE links */}
-      <line x1="84"  y1="116" x2="152" y2="154" stroke={CYAN} strokeWidth="1.1" opacity="0.45" strokeDasharray="4 4" />
-      <line x1="84"  y1="204" x2="152" y2="166" stroke={CYAN} strokeWidth="1.1" opacity="0.45" strokeDasharray="4 4" />
-      <line x1="132" y1="160" x2="172" y2="160" stroke={CYAN} strokeWidth="1.1" opacity="0.45" strokeDasharray="4 4" />
+      {/* BLE rings */}
+      {phones.slice(0, 3).map((p, i) => (
+        <circle key={i} cx={p.cx} cy={p.cy} r="34" stroke={CYAN} strokeWidth="0.7" fill="none" opacity="0.2" />
+      ))}
+      {/* BLE links A */}
+      <line x1="96"  y1="108" x2="162" y2="150" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
+      <line x1="96"  y1="212" x2="162" y2="170" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
+      <line x1="154" y1="160" x2="178" y2="160" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
       {/* ESP32-A */}
-      <rect x="172" y="145" width="40" height="30" rx="7" fill="rgba(240,165,0,0.08)" stroke={GOLD} strokeWidth="1.6" />
-      <text x="192" y="164" textAnchor="middle" fill={GOLD} fontSize="8" fontFamily="var(--font-mono,monospace)">ESP32</text>
-      {/* ESP32 → LoRa-A */}
-      <line x1="212" y1="160" x2="256" y2="160" stroke={GOLD} strokeWidth="1.2" opacity="0.6" />
+      <image href="/icons/esp32.webp" x={208 - EH/2} y={160 - EH/2} width={EH} height={EH} />
+      <text x="208" y="222" textAnchor="middle" fill={GOLD} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.75">ESP32</text>
+      <line x1="234" y1="160" x2="252" y2="160" stroke={GOLD} strokeWidth="1.3" opacity="0.6" />
       {/* LoRa-A */}
-      <rect x="256" y="140" width="34" height="40" rx="9" fill="rgba(192,132,252,0.08)" stroke={PURPLE} strokeWidth="1.6" />
-      <text x="273" y="164" textAnchor="middle" fill={PURPLE} fontSize="7" fontFamily="var(--font-mono,monospace)">LoRa</text>
+      <image href="/icons/lora.webp" x={278 - LH/2} y={160 - LH/2} width={LH} height={LH} />
+      <text x="278" y="222" textAnchor="middle" fill={PURPLE} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.75">LoRa</text>
 
       {/* ── LoRa Link ── */}
-      <line x1="290" y1="160" x2="590" y2="160" stroke={PURPLE} strokeWidth="1.4" strokeDasharray="8 6" opacity="0.65" />
-      <text x="440" y="142" textAnchor="middle" fill={PURPLE} fontSize="9" opacity="0.7" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em">LoRa · 868 MHz · up to 3 km</text>
+      <line x1="304" y1="160" x2="576" y2="160" stroke={PURPLE} strokeWidth="1.5" strokeDasharray="8 6" opacity="0.6" />
+      <text x="440" y="144" textAnchor="middle" fill={PURPLE} fontSize="9" opacity="0.65" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em">LoRa · 868 MHz · 1,500 m radius</text>
 
       {/* ── Cluster B ── */}
       {/* LoRa-B */}
-      <rect x="590" y="140" width="34" height="40" rx="9" fill="rgba(192,132,252,0.08)" stroke={PURPLE} strokeWidth="1.6" />
-      <text x="607" y="164" textAnchor="middle" fill={PURPLE} fontSize="7" fontFamily="var(--font-mono,monospace)">LoRa</text>
-      {/* LoRa-B → ESP32-B */}
-      <line x1="624" y1="160" x2="668" y2="160" stroke={GOLD} strokeWidth="1.2" opacity="0.6" />
+      <image href="/icons/lora.webp" x={602 - LH/2} y={160 - LH/2} width={LH} height={LH} />
+      <text x="602" y="222" textAnchor="middle" fill={PURPLE} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.75">LoRa</text>
+      <line x1="628" y1="160" x2="646" y2="160" stroke={GOLD} strokeWidth="1.3" opacity="0.6" />
       {/* ESP32-B */}
-      <rect x="668" y="145" width="40" height="30" rx="7" fill="rgba(240,165,0,0.08)" stroke={GOLD} strokeWidth="1.6" />
-      <text x="688" y="164" textAnchor="middle" fill={GOLD} fontSize="8" fontFamily="var(--font-mono,monospace)">ESP32</text>
-      {/* BLE links */}
-      <line x1="708" y1="154" x2="748" y2="116" stroke={CYAN} strokeWidth="1.1" opacity="0.45" strokeDasharray="4 4" />
-      <line x1="708" y1="166" x2="748" y2="204" stroke={CYAN} strokeWidth="1.1" opacity="0.45" strokeDasharray="4 4" />
-      <line x1="708" y1="160" x2="748" y2="160" stroke={CYAN} strokeWidth="1.1" opacity="0.45" strokeDasharray="4 4" />
-      {/* Phone nodes B */}
-      <circle cx="764" cy="110" r="16" fill="none" stroke={WHITE} strokeWidth="1.6" opacity="0.85" />
-      <circle cx="764" cy="210" r="16" fill="none" stroke={WHITE} strokeWidth="1.6" opacity="0.85" />
-      <circle cx="812" cy="160" r="16" fill="none" stroke={WHITE} strokeWidth="1.6" opacity="0.85" />
-      <circle cx="764" cy="110" r="28" stroke={CYAN} strokeWidth="0.6" fill="none" opacity="0.2" />
-      <circle cx="764" cy="210" r="28" stroke={CYAN} strokeWidth="0.6" fill="none" opacity="0.2" />
-      <circle cx="812" cy="160" r="28" stroke={CYAN} strokeWidth="0.6" fill="none" opacity="0.2" />
+      <image href="/icons/esp32.webp" x={672 - EH/2} y={160 - EH/2} width={EH} height={EH} />
+      <text x="672" y="222" textAnchor="middle" fill={GOLD} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.75">ESP32</text>
+      {/* BLE links B */}
+      <line x1="698" y1="150" x2="726" y2="108" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
+      <line x1="698" y1="170" x2="726" y2="212" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
+      <line x1="698" y1="160" x2="726" y2="160" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
+      {/* BLE rings B */}
+      {phones.slice(3).map((p, i) => (
+        <circle key={i} cx={p.cx} cy={p.cy} r="34" stroke={CYAN} strokeWidth="0.7" fill="none" opacity="0.2" />
+      ))}
+
+      {/* Phone images */}
+      {phones.map((p, i) => (
+        <image key={i} href="/icons/phone.webp" x={p.cx - PH/2} y={p.cy - PH/2} width={PH} height={PH} />
+      ))}
 
       {/* Labels */}
-      <text x="140" y="270" textAnchor="middle" fill={CYAN} fontSize="10" opacity="0.65" fontFamily="var(--font-mono,monospace)" letterSpacing="0.1em">BLE CLUSTER A</text>
-      <text x="690" y="270" textAnchor="middle" fill={CYAN} fontSize="10" opacity="0.65" fontFamily="var(--font-mono,monospace)" letterSpacing="0.1em">BLE CLUSTER B</text>
-
-      {/* Phone labels */}
-      <text x="68"  cy="110" textAnchor="middle" fill={WHITE} fontSize="9" opacity="0.5" y="110" dy="0">P</text>
-      <text x="68"  cy="210" textAnchor="middle" fill={WHITE} fontSize="9" opacity="0.5" y="210" dy="0">P</text>
-      <text x="116" cy="160" textAnchor="middle" fill={WHITE} fontSize="9" opacity="0.5" y="165" dy="0">P</text>
-      <text x="764" cy="110" textAnchor="middle" fill={WHITE} fontSize="9" opacity="0.5" y="110" dy="0">P</text>
-      <text x="764" cy="210" textAnchor="middle" fill={WHITE} fontSize="9" opacity="0.5" y="210" dy="0">P</text>
-      <text x="812" cy="160" textAnchor="middle" fill={WHITE} fontSize="9" opacity="0.5" y="165" dy="0">P</text>
+      <text x="170" y="298" textAnchor="middle" fill={CYAN} fontSize="10" opacity="0.6" fontFamily="var(--font-mono,monospace)" letterSpacing="0.1em">BLE CLUSTER A</text>
+      <text x="706" y="298" textAnchor="middle" fill={CYAN} fontSize="10" opacity="0.6" fontFamily="var(--font-mono,monospace)" letterSpacing="0.1em">BLE CLUSTER B</text>
 
       {/* Animated packet dot */}
       {active && (
@@ -477,7 +585,7 @@ function ArchitectureDiagram({ active }: { active: boolean }) {
           <animateMotion
             dur="4.5s"
             repeatCount="indefinite"
-            path="M68,160 L116,160 L172,160 L192,160 L256,160 L440,160 L590,160 L668,160 L708,160 L764,160"
+            path="M68,160 L126,160 L178,160 L208,160 L278,160 L440,160 L602,160 L672,160 L726,160 L783,160"
           />
         </circle>
       )}
@@ -527,12 +635,12 @@ const FIELD_DETAILS: Record<FieldKey, FieldDetail> = {
     desc: 'Target node identifier (4-byte key fingerprint), or the broadcast constant 0xFFFFFFFF for group messages. Relay nodes forward regardless of this field — only the intended recipient holds the matching private key and can decrypt the payload.',
   },
   ttl: {
-    name: 'ttl', offset: 'B18', size: '1 byte', color: WHITE,
-    desc: 'Time-to-Live hop budget. Set to 5 at the origin device. Each relay decrements TTL by 1 before forwarding. When TTL reaches 0 the packet is silently dropped, preventing infinite routing loops in mesh cycles.',
+    name: 'ttl', offset: 'B23', size: '1 byte', color: WHITE,
+    desc: '⚡ Mutable-by-relay field — NOT covered by AAD. Time-to-Live hop budget. Set to 5 at the origin device. Each relay decrements TTL by 1 before forwarding. When TTL reaches 0 the packet is silently dropped, preventing infinite routing loops.',
   },
   hopCount: {
-    name: 'hopCount', offset: 'B19', size: '1 byte', color: WHITE,
-    desc: 'Hop counter. Starts at 0 at the origin. Incremented by every relay node. Lets the destination measure the actual path length and allows the UI to display delivery distance (e.g. "delivered in 3 hops").',
+    name: 'hopCount', offset: 'B24', size: '1 byte', color: WHITE,
+    desc: '⚡ Mutable-by-relay field — NOT covered by AAD. Hop counter. Starts at 0 at the origin. Incremented by every relay node. Lets the destination measure path length and lets the UI display delivery distance (e.g. "delivered in 3 hops").',
   },
   timestamp: {
     name: 'timestamp', offset: 'B20–B23', size: '4 bytes', color: WHITE,
@@ -549,7 +657,7 @@ const FIELD_DETAILS: Record<FieldKey, FieldDetail> = {
   },
   payloadLen: {
     name: 'payloadLen', offset: 'B25', size: '1 byte', color: WHITE,
-    desc: 'Length of the payload field in bytes (valid range: 0–208). Allows the parser to read exactly the right number of bytes following the 42-byte fixed header without relying on a frame delimiter or total-length field.',
+    desc: '⚡ Mutable-by-relay field — NOT covered by AAD. Length of the payload in bytes (0–208). Allows the parser to read exactly the right number of bytes after the 42-byte fixed header without a frame delimiter. Relays update this field when necessary.',
   },
   authTag: {
     name: 'authTag', offset: 'B26–B41', size: '16 bytes', color: GOLD,
@@ -615,16 +723,19 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
   // SVG geometry — larger bar than before
   const VW = 960, MX = 16, BY = 92, BH = 92, R = 9, GAP = 6;
 
+  // Field order matches thesis Figure 5.1:
+  // AAD(23B) = version+type+msgId+senderId+receiverId+timestamp+flags
+  // Mutable-by-relay(3B) = ttl+hopCount+payloadLen
   const hf: { id: FieldKey; bytes: string; w: number }[] = [
     { id: 'version',    bytes: '1B', w: 30 },
     { id: 'type',       bytes: '1B', w: 30 },
     { id: 'msgId',      bytes: '8B', w: 70 },
     { id: 'senderId',   bytes: '4B', w: 48 },
     { id: 'receiverId', bytes: '4B', w: 48 },
-    { id: 'ttl',        bytes: '1B', w: 30 },
-    { id: 'hopCount',   bytes: '1B', w: 30 },
     { id: 'timestamp',  bytes: '4B', w: 48 },
     { id: 'flags',      bytes: '1B', w: 30 },
+    { id: 'ttl',        bytes: '1B', w: 30 },
+    { id: 'hopCount',   bytes: '1B', w: 30 },
     { id: 'payloadLen', bytes: '1B', w: 30 },
   ];
   const HW = hf.reduce((s, f) => s + f.w, 0); // 394
@@ -639,18 +750,26 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
   let runX = MX;
   hf.forEach(f => { fxs.push(runX); runX += f.w; });
 
+  // Byte offsets for new field order: v(1)+t(1)+msgId(8)+sId(4)+rId(4)+ts(4)+flags(1)+ttl(1)+hc(1)+pLen(1)=26
+  // B0=v B2=msgId B10=sId B14=rId B18=ts B22=flags B23=ttl B24=hc B25=pLen B26=authTag B42=payload
   const ticks: { bx: number; label: string }[] = [
     { bx: MX,           label: 'B0'  },
     { bx: MX + 60,      label: 'B2'  },
     { bx: MX + 130,     label: 'B10' },
     { bx: MX + 178,     label: 'B14' },
     { bx: MX + 226,     label: 'B18' },
-    { bx: MX + 256,     label: 'B19' },
-    { bx: MX + 286,     label: 'B20' },
+    { bx: MX + 274,     label: 'B22' },
+    { bx: MX + 304,     label: 'B23' },
     { bx: MX + 334,     label: 'B24' },
+    { bx: MX + 364,     label: 'B25' },
     { bx: AX,           label: 'B26' },
     { bx: PX,           label: 'B42' },
   ];
+
+  // AAD spans fields 0-6 (version..flags) = 23 bytes
+  // Mutable-by-relay spans fields 7-9 (ttl, hopCount, payloadLen) = 3 bytes
+  const AAD_END_X = MX + 30+30+70+48+48+48+30; // = MX + 304 = 320
+  const MUT_END_X = MX + HW;                    // = MX + 394 = 410
 
   const isSel = (id: FieldKey) => selectedField === id;
   const isHov = (id: FieldKey) => hoveredField === id && selectedField !== id;
@@ -666,7 +785,7 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
     <div className={`packet-format-wrap ${active ? 'is-active' : ''}`}>
       <svg
         className="packet-svg"
-        viewBox={`0 0 ${VW} 300`}
+        viewBox={`0 0 ${VW} 360`}
         style={{ cursor: 'default', userSelect: 'none' }}
       >
         <defs>
@@ -708,7 +827,8 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
           const fx = fxs[i];
           const cx = fx + f.w / 2;
           const cy = BY + BH / 2;
-          const narrow = f.w < 44;
+          // rotate all fields that are ≤48px wide (senderId, receiverId, timestamp at 48 included)
+          const narrow = f.w <= 48;
           const sel = isSel(f.id);
           return (
             <g key={i} className={`packet-field pf-${i}`} style={{ pointerEvents: 'none' }}>
@@ -717,12 +837,19 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
                   stroke="rgba(246,248,255,0.1)" strokeWidth="0.8" />
               )}
               {narrow ? (
-                <text x={cx} y={cy+2} textAnchor="middle" dominantBaseline="middle"
-                  fill={sel ? CYAN : 'rgba(246,248,255,0.72)'}
-                  fontSize="10" fontFamily="var(--font-mono,monospace)"
-                  transform={`rotate(-90,${cx},${cy})`}>
-                  {f.id}
-                </text>
+                <>
+                  <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="middle"
+                    fill={sel ? CYAN : 'rgba(246,248,255,0.72)'}
+                    fontSize="10" fontFamily="var(--font-mono,monospace)"
+                    transform={`rotate(-90,${cx},${cy - 4})`}>
+                    {f.id}
+                  </text>
+                  <text x={cx} y={BB - 8} textAnchor="middle"
+                    fill={sel ? CYAN : 'rgba(246,248,255,0.35)'}
+                    fontSize="8.5" fontFamily="var(--font-mono,monospace)">
+                    {f.bytes}
+                  </text>
+                </>
               ) : (
                 <>
                   <text x={cx} y={cy-7} textAnchor="middle"
@@ -808,47 +935,76 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
           </text>
         </g>
 
-        {/* ── Bracket labels (non-interactive) ── */}
+        {/* ── Above: header vs. authenticated section labels ── */}
         <g style={{ pointerEvents: 'none' }}>
-          <line x1={MX}    y1={BY-24} x2={MX+HW} y2={BY-24} stroke="rgba(246,248,255,0.18)" strokeWidth="0.8" />
-          <line x1={MX}    y1={BY-24} x2={MX}    y2={BY-13} stroke="rgba(246,248,255,0.18)" strokeWidth="0.8" />
-          <line x1={MX+HW} y1={BY-24} x2={MX+HW} y2={BY-13} stroke="rgba(246,248,255,0.18)" strokeWidth="0.8" />
-          <text x={MX+HW/2} y={BY-28} textAnchor="middle"
-            fill="rgba(246,248,255,0.32)" fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em">
-            PLAINTEXT HEADER · 26 B · RELAY CAN READ
+          <line x1={MX}    y1={BY-22} x2={MX+HW} y2={BY-22} stroke="rgba(246,248,255,0.15)" strokeWidth="0.8" />
+          <line x1={MX}    y1={BY-22} x2={MX}    y2={BY-12} stroke="rgba(246,248,255,0.15)" strokeWidth="0.8" />
+          <line x1={MX+HW} y1={BY-22} x2={MX+HW} y2={BY-12} stroke="rgba(246,248,255,0.15)" strokeWidth="0.8" />
+          <text x={MX+HW/2} y={BY-26} textAnchor="middle"
+            fill="rgba(246,248,255,0.28)" fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em">
+            HEADER · 26 B
+          </text>
+          <line x1={AX}    y1={BY-22} x2={PX+PW} y2={BY-22} stroke={CYAN} strokeWidth="0.8" opacity="0.35" />
+          <line x1={AX}    y1={BY-22} x2={AX}    y2={BY-12} stroke={CYAN} strokeWidth="0.8" opacity="0.35" />
+          <line x1={PX+PW} y1={BY-22} x2={PX+PW} y2={BY-12} stroke={CYAN} strokeWidth="0.8" opacity="0.35" />
+          <text x={AX+(AW+GAP+PW)/2} y={BY-26} textAnchor="middle"
+            fill={CYAN} fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em" opacity="0.55">
+            AES-128-GCM AUTHENTICATED · RELAY CANNOT READ
+          </text>
+        </g>
+
+        {/* ── Below bar: AAD + Mutable-by-relay brackets ── */}
+        <g style={{ pointerEvents: 'none' }}>
+          {/* AAD bracket */}
+          <line x1={MX}        y1={BB+8}  x2={MX}        y2={BB+22} stroke="rgba(130,180,255,0.4)" strokeWidth="0.9" />
+          <line x1={MX}        y1={BB+22} x2={AAD_END_X} y2={BB+22} stroke="rgba(130,180,255,0.4)" strokeWidth="0.9" />
+          <line x1={AAD_END_X} y1={BB+8}  x2={AAD_END_X} y2={BB+22} stroke="rgba(130,180,255,0.4)" strokeWidth="0.9" />
+          <text x={(MX + AAD_END_X) / 2} y={BB+36} textAnchor="middle"
+            fill="rgba(130,180,255,0.7)" fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.06em">
+            AAD (Authenticated Data) · 23 B
           </text>
 
-          <line x1={AX}    y1={BY-24} x2={PX+PW} y2={BY-24} stroke={CYAN} strokeWidth="0.8" opacity="0.4" />
-          <line x1={AX}    y1={BY-24} x2={AX}    y2={BY-13} stroke={CYAN} strokeWidth="0.8" opacity="0.4" />
-          <line x1={PX+PW} y1={BY-24} x2={PX+PW} y2={BY-13} stroke={CYAN} strokeWidth="0.8" opacity="0.4" />
-          <text x={AX+(AW+GAP+PW)/2} y={BY-28} textAnchor="middle"
-            fill={CYAN} fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em" opacity="0.65">
-            AES-128-GCM AUTHENTICATED · ≤224 B · RELAY CANNOT READ
+          {/* Mutable-by-relay bracket */}
+          <line x1={AAD_END_X} y1={BB+8}  x2={AAD_END_X} y2={BB+22} stroke="rgba(246,248,255,0.3)" strokeWidth="0.9" />
+          <line x1={AAD_END_X} y1={BB+22} x2={MUT_END_X} y2={BB+22} stroke="rgba(246,248,255,0.3)" strokeWidth="0.9" />
+          <line x1={MUT_END_X} y1={BB+8}  x2={MUT_END_X} y2={BB+22} stroke="rgba(246,248,255,0.3)" strokeWidth="0.9" />
+          <text x={(AAD_END_X + MUT_END_X) / 2} y={BB+36} textAnchor="middle"
+            fill="rgba(246,248,255,0.5)" fontSize="8" fontFamily="var(--font-mono,monospace)" letterSpacing="0.05em">
+            Mutable-by-relay · 3 B
+          </text>
+
+          {/* authTag bracket */}
+          <line x1={AX}    y1={BB+8}  x2={AX}    y2={BB+22} stroke={GOLD} strokeWidth="0.9" opacity="0.45" />
+          <line x1={AX}    y1={BB+22} x2={AX+AW} y2={BB+22} stroke={GOLD} strokeWidth="0.9" opacity="0.45" />
+          <line x1={AX+AW} y1={BB+8}  x2={AX+AW} y2={BB+22} stroke={GOLD} strokeWidth="0.9" opacity="0.45" />
+          <text x={AX+AW/2} y={BB+36} textAnchor="middle"
+            fill={GOLD} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.6" letterSpacing="0.05em">
+            authTag · 16 B · AES-GCM
           </text>
         </g>
 
         {/* ── Byte offset ticks ── */}
         {ticks.map((t, i) => (
           <g key={i} style={{ pointerEvents: 'none' }}>
-            <line x1={t.bx} y1={BB} x2={t.bx} y2={BB+11} stroke="rgba(246,248,255,0.12)" strokeWidth="0.7" />
-            <text x={t.bx} y={BB+22} textAnchor="middle"
-              fill="rgba(246,248,255,0.26)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">
+            <line x1={t.bx} y1={BB+50} x2={t.bx} y2={BB+60} stroke="rgba(246,248,255,0.1)" strokeWidth="0.7" />
+            <text x={t.bx} y={BB+72} textAnchor="middle"
+              fill="rgba(246,248,255,0.22)" fontSize="8" fontFamily="var(--font-mono,monospace)">
               {t.label}
             </text>
           </g>
         ))}
 
         {/* Total cap + hint */}
-        <text x={VW/2} y={BB+42} textAnchor="middle"
-          fill="rgba(246,248,255,0.18)" fontSize="9.5"
+        <text x={VW/2} y={BB+92} textAnchor="middle"
+          fill="rgba(246,248,255,0.15)" fontSize="9"
           fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em"
           style={{ pointerEvents: 'none' }}>
           42 B FIXED HEADER + 0–208 B PAYLOAD · 250 B TOTAL CAP · PacketSerializer.kt
         </text>
 
         {!selectedField && (
-          <text x={VW/2} y={BB+60} textAnchor="middle"
-            fill="rgba(246,248,255,0.22)" fontSize="9"
+          <text x={VW/2} y={BB+112} textAnchor="middle"
+            fill="rgba(246,248,255,0.2)" fontSize="9"
             fontFamily="var(--font-mono,monospace)" letterSpacing="0.12em"
             className="pf-click-hint-svg"
             style={{ pointerEvents: 'none' }}>
@@ -871,12 +1027,12 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
 // ─── Slide 11: Key Metrics (6-metric grid) ───────────────────────────────────
 function NumbersSlide({ visibleCount }: { visibleCount: number }) {
   const metrics = [
-    { value: '<2',    unit: 's',   label: 'END-TO-END LATENCY',        sub: 'measured across 5 hops in testing',          color: CYAN },
-    { value: '1,500', unit: 'm',   label: 'LONGEST OFFLINE DELIVERY',  sub: 'no infrastructure, real hardware',            color: GOLD },
-    { value: '30',    unit: 'm',   label: 'BLE PER-HOP RANGE',         sub: 'LE Coded PHY, SF=8 — indoor tested',          color: CYAN },
-    { value: '3',     unit: 'km',  label: 'LORA BRIDGE RANGE',         sub: 'line-of-sight, urban environment',            color: GOLD },
-    { value: '250',   unit: 'B',   label: 'PACKET SIZE CAP',           sub: 'optimized for LoRa airtime constraints',      color: CYAN },
-    { value: '5',     unit: '',    label: 'MAX HOP COUNT (TTL)',        sub: 'flood-limited, seen_msg_ids dedup at 200',   color: GOLD },
+    { value: '<2',    unit: 's',   label: 'END-TO-END LATENCY',        sub: 'measured across 5 hops in testing',              color: CYAN },
+    { value: '1,500', unit: 'm',   label: 'TESTED LORA RANGE',         sub: 'real-world outdoor deployment · SX1276',         color: GOLD },
+    { value: '20',    unit: 'm',   label: 'BLE PER-HOP RANGE',         sub: 'LE Coded PHY — indoor tested',                   color: CYAN },
+    { value: '200',   unit: '',    label: 'DEDUP CACHE SIZE',           sub: 'seen_msg_ids ring buffer per relay node',         color: GOLD },
+    { value: '250',   unit: 'B',   label: 'PACKET SIZE CAP',           sub: 'optimized for LoRa airtime constraints',          color: CYAN },
+    { value: '5',     unit: '',    label: 'MAX HOP COUNT (TTL)',        sub: 'flood-limited with managed jitter rebroadcast',   color: GOLD },
   ];
 
   return (
@@ -1073,57 +1229,20 @@ function SecurityDeepDiveAnimation({ replayKey }: { replayKey: number }) {
 
 // ─── Live Demo Slide ──────────────────────────────────────────────────────────
 const DEMO_STEPS = [
-  { title: 'Install App', desc: 'APK installs in seconds. No account, no sign-up, no server connection required.' },
-  { title: 'Key Generation', desc: 'On first launch the device auto-generates a Curve25519 keypair. Your cryptographic identity is born on-device.' },
-  { title: 'QR Exchange', desc: 'Scan a peer\'s QR code to exchange public keys out-of-band. Keys never travel over the radio.' },
-  { title: 'Network Tab', desc: 'See the live mesh — nodes, hop counts, RSSI, and which ones are LoRa-extended reach.' },
-  { title: 'Start Chatting', desc: 'AES-128-GCM encrypted on your device. Relay nodes forward ciphertext they cannot read.' },
-  { title: 'Settings', desc: 'Tune transmit power, hop count, relay mode, and inspect your node ID and key fingerprint.' },
+  { title: 'Install App' },
+  { title: 'Key Generation' },
+  { title: 'QR Exchange' },
+  { title: 'Network Tab' },
+  { title: 'Start Chatting' },
+  { title: 'Settings' },
 ];
 
 function LiveDemoSlide({ isActive }: { isActive: boolean }) {
-  const [winPos, setWinPos] = useState({ x: -9999, y: 0 });
-  const [winSize, setWinSize] = useState({ w: 340, h: 620 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
-  const resizeRef = useRef<{ sx: number; sy: number; ow: number; oh: number } | null>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const r = containerRef.current.getBoundingClientRect();
-    setWinPos({ x: Math.round(r.width * 0.52), y: Math.round((r.height - 620) / 2) });
-  }, []);
-
-  const onDragStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    dragRef.current = { sx: e.clientX, sy: e.clientY, ox: winPos.x, oy: winPos.y };
-    const onMove = (ev: MouseEvent) => {
-      if (!dragRef.current) return;
-      setWinPos({ x: dragRef.current.ox + ev.clientX - dragRef.current.sx, y: dragRef.current.oy + ev.clientY - dragRef.current.sy });
-    };
-    const onUp = () => { dragRef.current = null; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  };
-
-  const onResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    resizeRef.current = { sx: e.clientX, sy: e.clientY, ow: winSize.w, oh: winSize.h };
-    const onMove = (ev: MouseEvent) => {
-      if (!resizeRef.current) return;
-      setWinSize({ w: Math.max(280, resizeRef.current.ow + ev.clientX - resizeRef.current.sx), h: Math.max(400, resizeRef.current.oh + ev.clientY - resizeRef.current.sy) });
-    };
-    const onUp = () => { resizeRef.current = null; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  };
-
   return (
-    <div className="demo-slide" ref={containerRef}>
+    <div className="demo-slide">
       <div className="demo-steps-panel">
         <div className="hook-label">LIVE DEMO</div>
-        <h2 className="demo-steps-heading">See it in action.</h2>
+        <h2 className="demo-steps-heading">System Demonstration</h2>
         <p className="demo-steps-sub">Your teammates have the real app running — follow along on screen.</p>
         <ol className="demo-steps-list">
           {DEMO_STEPS.map((step, i) => (
@@ -1131,33 +1250,285 @@ function LiveDemoSlide({ isActive }: { isActive: boolean }) {
               <div className="demo-step-num">{i + 1}</div>
               <div className="demo-step-body">
                 <div className="demo-step-title">{step.title}</div>
-                <div className="demo-step-desc">{step.desc}</div>
               </div>
             </li>
           ))}
         </ol>
       </div>
 
-      {winPos.x > -9999 && (
-        <div className="demo-float-win" style={{ left: winPos.x, top: winPos.y, width: winSize.w, height: winSize.h }}>
-          <div className="demo-win-titlebar" onMouseDown={onDragStart}>
-            <div className="demo-win-dots">
-              <span className="demo-win-dot" style={{ background: '#ff5f57' }} />
-              <span className="demo-win-dot" style={{ background: '#febc2e' }} />
-              <span className="demo-win-dot" style={{ background: '#28c840' }} />
-            </div>
-            <div className="demo-win-label">Peer Reach · Android App</div>
-            <div className="demo-win-grab-hint">drag to move</div>
-          </div>
-          <iframe
-            src="/peerreach-mockup.html"
-            className="demo-win-iframe"
-            title="Peer Reach App"
-            sandbox="allow-scripts allow-same-origin"
-          />
-          <div className="demo-win-resizer" onMouseDown={onResizeStart} title="Drag to resize" />
+      <div className="demo-iframe-wrap">
+        <iframe
+          src="/peerreach-mockup.html"
+          className="demo-win-iframe"
+          title="Peer Reach App"
+          sandbox="allow-scripts allow-same-origin"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Slide 11: Managed Flooding Algorithm ────────────────────────────────────
+function FloodingAlgorithmSlide({ isActive }: { isActive: boolean }) {
+  const [step, setStep] = useState(0);
+  const MAX_STEP = 11;
+  const mono = "var(--font-mono,'JetBrains Mono',monospace)";
+
+  useEffect(() => {
+    if (!isActive) setStep(0);
+  }, [isActive]);
+
+  const show = (n: number) => step >= n;
+  const MY = 100;
+  const BY = 218;
+
+  // inline arrowhead pointing right, tip at (x,y)
+  const ArrR = (x: number, y: number, c = CYAN) => (
+    <polygon points={`${x},${y} ${x-8},${y-4} ${x-8},${y+4}`} fill={c} />
+  );
+  // inline arrowhead pointing down, tip at (x,y)
+  const ArrD = (x: number, y: number, c = CYAN) => (
+    <polygon points={`${x},${y} ${x-4},${y-8} ${x+4},${y-8}`} fill={c} />
+  );
+
+  return (
+    <div className="flooding-outer">
+      <svg viewBox="0 0 1200 268" className="flooding-svg">
+        {/* ── S0: Packet Received (oval) ── */}
+        {show(0) && (
+          <g>
+            <rect x="5" y={MY-24} width="96" height="48" rx="24" fill="rgba(34,211,238,0.08)" stroke={CYAN} strokeWidth="1.5" />
+            <text x="53" y={MY-5}  textAnchor="middle" fill={CYAN} fontSize="10" fontFamily={mono}>Packet</text>
+            <text x="53" y={MY+9}  textAnchor="middle" fill={CYAN} fontSize="10" fontFamily={mono}>Received</text>
+          </g>
+        )}
+
+        {/* ── S1: Look up msgId ── */}
+        {show(1) && (
+          <g>
+            <line x1="101" y1={MY} x2="118" y2={MY} stroke={CYAN} strokeWidth="1.2" />
+            {ArrR(126, MY)}
+            <rect x="126" y={MY-26} width="118" height="52" rx="6" fill="transparent" stroke={WHITE} strokeWidth="1.2" />
+            <text x="185" y={MY-7}  textAnchor="middle" fill={WHITE} fontSize="9.5" fontFamily={mono}>Look up msgId</text>
+            <text x="185" y={MY+7}  textAnchor="middle" fill={WHITE} fontSize="9" fontFamily={mono}>in seen-msg cache</text>
+          </g>
+        )}
+
+        {/* ── S2: Already seen? diamond ── */}
+        {show(2) && (
+          <g>
+            <line x1="244" y1={MY} x2="262" y2={MY} stroke={CYAN} strokeWidth="1.2" />
+            {ArrR(270, MY)}
+            <polygon points={`320,${MY-28} 374,${MY} 320,${MY+28} 266,${MY}`}
+              fill="rgba(34,211,238,0.06)" stroke={CYAN} strokeWidth="1.3" />
+            <text x="320" y={MY-6}  textAnchor="middle" fill={CYAN} fontSize="9.5" fontFamily={mono}>Already</text>
+            <text x="320" y={MY+8}  textAnchor="middle" fill={CYAN} fontSize="9.5" fontFamily={mono}>seen?</text>
+          </g>
+        )}
+
+        {/* ── S3: Yes→Drop(dup.) | No label ── */}
+        {show(3) && (
+          <g>
+            <line x1="320" y1={MY+28} x2="320" y2={BY-26} stroke={CYAN} strokeWidth="1.2" />
+            {ArrD(320, BY-18)}
+            <text x="330" y={MY+50} fill={WHITE} fontSize="8.5" fontFamily={mono} opacity="0.75">Yes</text>
+            <rect x="278" y={BY-24} width="84" height="48" rx="8"
+              fill="rgba(248,113,113,0.1)" stroke="#f87171" strokeWidth="1.3" />
+            <text x="320" y={BY-5}  textAnchor="middle" fill="#f87171" fontSize="10" fontFamily={mono}>Drop</text>
+            <text x="320" y={BY+9}  textAnchor="middle" fill="#f87171" fontSize="10" fontFamily={mono}>(dup.)</text>
+            <text x="390" y={MY+12} fill={WHITE} fontSize="8.5" fontFamily={mono} opacity="0.75">No</text>
+          </g>
+        )}
+
+        {/* ── S4: Insert msgId into cache ── */}
+        {show(4) && (
+          <g>
+            <line x1="374" y1={MY} x2="392" y2={MY} stroke={CYAN} strokeWidth="1.2" />
+            {ArrR(400, MY)}
+            <rect x="400" y={MY-26} width="112" height="52" rx="6" fill="transparent" stroke={WHITE} strokeWidth="1.2" />
+            <text x="456" y={MY-7}  textAnchor="middle" fill={WHITE} fontSize="9.5" fontFamily={mono}>Insert msgId</text>
+            <text x="456" y={MY+7}  textAnchor="middle" fill={WHITE} fontSize="9.5" fontFamily={mono}>into cache</text>
+          </g>
+        )}
+
+        {/* ── S5: TTL>0 after decrement? ── */}
+        {show(5) && (
+          <g>
+            <line x1="512" y1={MY} x2="530" y2={MY} stroke={GOLD} strokeWidth="1.2" />
+            {ArrR(538, MY, GOLD)}
+            <polygon points={`608,${MY-32} 678,${MY} 608,${MY+32} 538,${MY}`}
+              fill="rgba(240,165,0,0.06)" stroke={GOLD} strokeWidth="1.3" />
+            <text x="608" y={MY-10} textAnchor="middle" fill={GOLD} fontSize="9" fontFamily={mono}>TTL &gt; 0</text>
+            <text x="608" y={MY+3}  textAnchor="middle" fill={GOLD} fontSize="9" fontFamily={mono}>after</text>
+            <text x="608" y={MY+16} textAnchor="middle" fill={GOLD} fontSize="9" fontFamily={mono}>decrement?</text>
+          </g>
+        )}
+
+        {/* ── S6: No→Drop(TTL=0) | Yes label ── */}
+        {show(6) && (
+          <g>
+            <line x1="608" y1={MY+32} x2="608" y2={BY-26} stroke={GOLD} strokeWidth="1.2" />
+            {ArrD(608, BY-18, GOLD)}
+            <text x="618" y={MY+54} fill={WHITE} fontSize="8.5" fontFamily={mono} opacity="0.75">No</text>
+            <rect x="562" y={BY-24} width="92" height="48" rx="8"
+              fill="rgba(248,113,113,0.1)" stroke="#f87171" strokeWidth="1.3" />
+            <text x="608" y={BY-5}  textAnchor="middle" fill="#f87171" fontSize="10" fontFamily={mono}>Drop</text>
+            <text x="608" y={BY+9}  textAnchor="middle" fill="#f87171" fontSize="10" fontFamily={mono}>(TTL=0)</text>
+            <text x="694" y={MY+12} fill={WHITE} fontSize="8.5" fontFamily={mono} opacity="0.75">Yes</text>
+          </g>
+        )}
+
+        {/* ── S7: Receiver = this node? ── */}
+        {show(7) && (
+          <g>
+            <line x1="678" y1={MY} x2="696" y2={MY} stroke={CYAN} strokeWidth="1.2" />
+            {ArrR(704, MY)}
+            <polygon points={`774,${MY-30} 844,${MY} 774,${MY+30} 704,${MY}`}
+              fill="rgba(34,211,238,0.06)" stroke={CYAN} strokeWidth="1.3" />
+            <text x="774" y={MY-8}  textAnchor="middle" fill={CYAN} fontSize="9" fontFamily={mono}>Receiver =</text>
+            <text x="774" y={MY+6}  textAnchor="middle" fill={CYAN} fontSize="9" fontFamily={mono}>this node?</text>
+          </g>
+        )}
+
+        {/* ── S8: Yes→Deliver | No label ── */}
+        {show(8) && (
+          <g>
+            <line x1="774" y1={MY+30} x2="774" y2={BY-26} stroke={CYAN} strokeWidth="1.2" />
+            {ArrD(774, BY-18)}
+            <text x="784" y={MY+52} fill={WHITE} fontSize="8.5" fontFamily={mono} opacity="0.75">Yes</text>
+            <rect x="726" y={BY-24} width="96" height="48" rx="8"
+              fill="rgba(52,211,153,0.1)" stroke={GREEN} strokeWidth="1.3" />
+            <text x="774" y={BY-5}  textAnchor="middle" fill={GREEN} fontSize="9.5" fontFamily={mono}>Deliver to</text>
+            <text x="774" y={BY+9}  textAnchor="middle" fill={GREEN} fontSize="9.5" fontFamily={mono}>app. layer</text>
+            <text x="860" y={MY+12} fill={WHITE} fontSize="8.5" fontFamily={mono} opacity="0.75">No</text>
+          </g>
+        )}
+
+        {/* ── S9: Compute random jitter delay ── */}
+        {show(9) && (
+          <g>
+            <line x1="844" y1={MY} x2="862" y2={MY} stroke={CYAN} strokeWidth="1.2" />
+            {ArrR(870, MY)}
+            <rect x="870" y={MY-26} width="122" height="52" rx="6" fill="transparent" stroke={WHITE} strokeWidth="1.2" />
+            <text x="931" y={MY-7}  textAnchor="middle" fill={WHITE} fontSize="9.5" fontFamily={mono}>Compute random</text>
+            <text x="931" y={MY+7}  textAnchor="middle" fill={WHITE} fontSize="9.5" fontFamily={mono}>jitter delay</text>
+          </g>
+        )}
+
+        {/* ── S10: Schedule rebroadcast after jitter ── */}
+        {show(10) && (
+          <g>
+            <line x1="992" y1={MY} x2="1010" y2={MY} stroke={CYAN} strokeWidth="1.2" />
+            {ArrR(1018, MY)}
+            <rect x="1018" y={MY-28} width="144" height="56" rx="8"
+              fill="rgba(34,211,238,0.1)" stroke={CYAN} strokeWidth="1.6" />
+            <text x="1090" y={MY-9}  textAnchor="middle" fill={CYAN} fontSize="9.5" fontFamily={mono} fontWeight="700">Schedule</text>
+            <text x="1090" y={MY+5}  textAnchor="middle" fill={CYAN} fontSize="9.5" fontFamily={mono} fontWeight="700">rebroadcast</text>
+            <text x="1090" y={MY+19} textAnchor="middle" fill={CYAN} fontSize="9.5" fontFamily={mono} fontWeight="700">after jitter</text>
+          </g>
+        )}
+
+        {/* ── S11: End ── */}
+        {show(11) && (
+          <g>
+            <line x1="1162" y1={MY} x2="1174" y2={MY} stroke={CYAN} strokeWidth="1.2" />
+            {ArrR(1182, MY)}
+            <rect x="1182" y={MY-20} width="14" height="0" rx="0" fill="none" />
+            <rect x="1162" y={MY-20} width="0" height="0" rx="0" fill="none" />
+            {/* end oval — last 36px */}
+            <rect x="1164" y={MY-20} width="32" height="40" rx="20"
+              fill="rgba(255,255,255,0.05)" stroke={WHITE} strokeWidth="1.3" />
+            <text x="1180" y={MY+4} textAnchor="middle" fill={WHITE} fontSize="9" fontFamily={mono}>End</text>
+          </g>
+        )}
+      </svg>
+
+      <div className="flooding-controls">
+        <button className="flooding-btn" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← Back</button>
+        <div className="flooding-dots">
+          {Array.from({ length: MAX_STEP + 1 }, (_, i) => (
+            <span key={i} className={`flooding-dot${i <= step ? ' active' : ''}`}
+              onClick={() => setStep(i)} />
+          ))}
         </div>
-      )}
+        {step < MAX_STEP
+          ? <button className="flooding-btn primary" onClick={() => setStep(s => Math.min(MAX_STEP, s + 1))}>Next →</button>
+          : <span className="flooding-complete">✓ complete</span>
+        }
+      </div>
+    </div>
+  );
+}
+
+// ─── Cover rotating subtitle ─────────────────────────────────────────────────
+function CoverSubtitle() {
+  const [idx, setIdx] = useState(0);
+  const lines = [
+    'An Offline Bluetooth Low Energy Communication Framework\nfor Multi-Hop Device-to-Device Networking',
+    'A hybrid BLE-LoRa mesh protocol enabling encrypted,\ninfrastructure-free messaging — no internet required.',
+  ];
+  useEffect(() => {
+    const t = setInterval(() => setIdx(i => (i + 1) % 2), 3800);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="cover-subtitle-rotate">
+      {lines.map((line, i) => (
+        <span key={i} className={`cover-sub-line ${idx === i ? 'is-active' : ''}`}>
+          {line.split('\n').map((l, j) => (
+            <span key={j}>{l}{j === 0 && <br />}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ─── Slide 13: Security Scenarios ────────────────────────────────────────────
+function SecurityScenariosSlide() {
+  const scenarios = [
+    {
+      num: '01', title: 'Eavesdropping', color: CYAN,
+      attack: 'Attacker passively sniffs BLE advertisements and captures raw packet bytes.',
+      defense: 'Payload is AES-128-GCM ciphertext. Without the session key, only an opaque blob is visible — message content is never exposed at any relay hop.',
+    },
+    {
+      num: '02', title: 'Replay Attack', color: GOLD,
+      attack: 'Attacker re-broadcasts a previously captured packet to duplicate delivery or disrupt the network.',
+      defense: 'Every packet carries a unique 8-byte cryptographically random msg_id. Each relay checks a 200-entry seen_msg_ids ring buffer and silently drops duplicates.',
+    },
+    {
+      num: '03', title: 'Packet Tampering', color: PURPLE,
+      attack: 'Attacker intercepts a packet in transit and modifies the payload or header fields.',
+      defense: 'AES-128-GCM authentication tag (16 bytes) covers the full payload. Any bit-flip causes tag verification to fail and the packet is silently dropped.',
+    },
+    {
+      num: '04', title: 'Node Impersonation', color: GREEN,
+      attack: 'Attacker claims to be a legitimate peer to intercept, inject, or forge messages.',
+      defense: 'Session keys derived via Curve25519 ECDH, exchanged out-of-band via QR code. An impersonator cannot derive the shared secret without the private key.',
+    },
+  ];
+
+  return (
+    <div className="scenarios-grid">
+      {scenarios.map((s) => (
+        <div key={s.num} className="scenario-card" style={{ '--sc-color': s.color } as React.CSSProperties}>
+          <div className="scenario-header">
+            <span className="scenario-num" style={{ color: s.color }}>{s.num}</span>
+            <span className="scenario-title" style={{ color: s.color }}>{s.title}</span>
+          </div>
+          <div className="scenario-body">
+            <div className="scenario-row">
+              <span className="scenario-badge attack">ATTACK</span>
+              <p className="scenario-text">{s.attack}</p>
+            </div>
+            <div className="scenario-row">
+              <span className="scenario-badge defense">DEFENSE</span>
+              <p className="scenario-text">{s.defense}</p>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1181,10 +1552,10 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
   const [packetActive,         setPacketActive]          = useState(false);
   const [openComponent,        setOpenComponent]         = useState<ComponentKey | null>(null);
 
-  // Indices after restructure:
-  // 0 cover | 1 abstract | 2 problem | 3 insight | 4 range | 5 solution
-  // 6 related | 7 components | 8 architecture | 9 packet | 10 numbers
-  // 11 security | 12 security-deep | 13 transition
+  // Indices (18 slides):
+  // 0 cover | 1 agenda | 2 abstract | 3 problem | 4 insight | 5 range | 6 solution
+  // 7 architecture | 8 components | 9 demo | 10 packet | 11 flooding
+  // 12 security | 13 security-scenarios | 14 security-deep | 15 numbers | 16 related | 17 transition
 
   const scrollToSection = (index: number) => {
     const container = scrollerRef.current;
@@ -1278,33 +1649,33 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
     };
   }, []);
 
-  // Problem list (index 2)
+  // Problem list (index 3 = hook-problem)
   useEffect(() => {
-    if (currentSectionIndex !== 2 || showProblemList) return;
+    if (currentSectionIndex !== 3 || showProblemList) return;
     const t = window.setTimeout(() => setShowProblemList(true), 800);
     return () => window.clearTimeout(t);
   }, [currentSectionIndex, showProblemList]);
 
-  // Related table (index 6)
+  // Related table (index 16 = hook-related)
   useEffect(() => {
-    if (currentSectionIndex !== 6) return;
+    if (currentSectionIndex !== 16) return;
     const t = window.setTimeout(() => setShowRelatedTable(true), 400);
     return () => window.clearTimeout(t);
   }, [currentSectionIndex]);
 
-  // Architecture active (index 9)
+  // Architecture active (index 7 = hook-architecture)
   useEffect(() => {
-    setArchActive(currentSectionIndex === 9);
+    setArchActive(currentSectionIndex === 7);
   }, [currentSectionIndex]);
 
-  // Packet active (index 10)
+  // Packet active (index 10 = hook-packet)
   useEffect(() => {
     setPacketActive(currentSectionIndex === 10);
   }, [currentSectionIndex]);
 
-  // Numbers (index 11)
+  // Numbers (index 15 = hook-numbers)
   useEffect(() => {
-    if (currentSectionIndex !== 11) { setVisibleNumberCount(0); return; }
+    if (currentSectionIndex !== 15) { setVisibleNumberCount(0); return; }
     setVisibleNumberCount(0);
     const ts = [120, 280, 440, 600, 760, 920].map((ms, i) =>
       window.setTimeout(() => setVisibleNumberCount(i + 1), ms)
@@ -1312,14 +1683,14 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
     return () => ts.forEach(t => window.clearTimeout(t));
   }, [currentSectionIndex]);
 
-  // Security overview (index 12)
+  // Security overview (index 12 = hook-security)
   useEffect(() => {
     if (currentSectionIndex === 12) setCryptoReplayKey(k => k + 1);
   }, [currentSectionIndex]);
 
-  // Security deep dive (index 13)
+  // Security deep dive (index 14 = hook-security-deep)
   useEffect(() => {
-    if (currentSectionIndex === 13) setSecDeepReplayKey(k => k + 1);
+    if (currentSectionIndex === 14) setSecDeepReplayKey(k => k + 1);
   }, [currentSectionIndex]);
 
   // Keyboard navigation
@@ -1344,21 +1715,20 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
   const dir = introNavDirection === 'backward' ? 'is-entering-backward' : '';
 
   return (
-    <div className="intro-shell" style={{ background: DEEP_BLACK }}>
+    <div className="intro-shell">
+      <ThemeToggle />
+      <SlideNumber current={currentSectionIndex} />
       <div ref={scrollerRef} className="intro-scroll-root">
 
-        {/* ── Slide 1: Cover ── */}
+        {/* ── Slide 01: Cover ── */}
         <SectionFrame id="cover" isActive={currentSectionIndex === 0}>
           <AmbientBackground />
           <div className="intro-overlay" />
           <div className={`cover-content intro-content ${dir}`}>
             <h1 className={`cover-title ${mounted ? 'is-visible' : ''}`}>PEER REACH</h1>
             <div className={`cover-kicker ${mounted ? 'is-visible' : ''}`}>
-              OFFLINE · DECENTRALIZED · PEER-TO-PEER COMMUNICATION
+              <CoverSubtitle />
             </div>
-            <p className={`cover-abstract ${mounted ? 'is-visible' : ''}`}>
-              A hybrid BLE-LoRa mesh protocol enabling encrypted, infrastructure-free messaging across smartphones and embedded devices — no internet required.
-            </p>
           </div>
           <div className={`cover-scroll-cue ${mounted && !hideScrollCue ? 'is-visible' : ''}`}>
             <div className="scroll-line"><span className="scroll-dot" /></div>
@@ -1366,125 +1736,151 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 2: Abstract ── */}
-        <SectionFrame id="hook-abstract" isActive={currentSectionIndex === 1}>
+        {/* ── Slide 02: Agenda ── */}
+        <SectionFrame id="hook-agenda" isActive={currentSectionIndex === 1}>
+          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(860px, 100%)' }}>
+            <AgendaSlide />
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 03: Abstract ── */}
+        <SectionFrame id="hook-abstract" isActive={currentSectionIndex === 2}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <div className="hook-label">THESIS OVERVIEW</div>
-            <h2>What we built. What we proved.</h2>
+            <div className="hook-label">ABSTRACT</div>
+            <h2>Thesis Overview</h2>
             <AbstractSlide />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 3: Problem ── */}
-        <SectionFrame id="hook-problem" isActive={currentSectionIndex === 2}>
+        {/* ── Slide 04: Problem ── */}
+        <SectionFrame id="hook-problem" isActive={currentSectionIndex === 3}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <div className="hook-label">ACT 1 · THE PROBLEM</div>
-            <h2>When infrastructure fails, communication dies.</h2>
+            <div className="hook-label">MOTIVATION</div>
+            <h2>Problem Statement</h2>
             <ProblemList visible={showProblemList} />
             <p className="hook-subline">Existing solutions depend on infrastructure that isn't always there.</p>
           </div>
         </SectionFrame>
 
-        {/* ── Slide 4: Insight ── */}
-        <SectionFrame id="hook-insight" isActive={currentSectionIndex === 3}>
+        {/* ── Slide 05: Insight ── */}
+        <SectionFrame id="hook-insight" isActive={currentSectionIndex === 4}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <h2>Every device in your pocket is a radio.</h2>
+            <h2>Every device has Bluetooth.</h2>
             <InsightAnimation />
-            <p className="hook-subline">Bluetooth Low Energy lets devices talk directly — no towers, no internet, no middleman.</p>
+            <p className="hook-subline">Bluetooth Low Energy lets devices talk directly without the need for towers, or internet, or service.</p>
           </div>
         </SectionFrame>
 
-        {/* ── Slide 5: Range Problem ── */}
-        <SectionFrame id="hook-range" isActive={currentSectionIndex === 4}>
+        {/* ── Slide 06: Range Problem ── */}
+        <SectionFrame id="hook-range" isActive={currentSectionIndex === 5}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <h2>But Bluetooth only reaches ~30 meters.</h2>
+            <h2>But Bluetooth only reaches ~15–20 meters.</h2>
             <RangeFailureAnimation />
             <p className="hook-subline">In large areas, BLE clusters are isolated — the gap between them cannot be bridged by BLE alone.</p>
           </div>
         </SectionFrame>
 
-        {/* ── Slide 6: Solution ── */}
-        <SectionFrame id="hook-solution" isActive={currentSectionIndex === 5}>
+        {/* ── Slide 07: Solution ── */}
+        <SectionFrame id="hook-solution" isActive={currentSectionIndex === 6}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <h2>So we extended the range by 50×.</h2>
+            <h2>So we extended the range by 100×.</h2>
             <SolutionAnimation />
-            <p className="hook-subline">LoRa bridges distant BLE clusters up to 1,500 m tested — 3 km line-of-sight. The result: a city-scale offline mesh.</p>
+            <p className="hook-subline">LoRa radio bridges the gap between BLE clusters, extending our coverage radius to 1,500 meters — no infrastructure required.</p>
           </div>
         </SectionFrame>
 
-        {/* ── Slide 7: Related Work ── */}
-        <SectionFrame id="hook-related" isActive={currentSectionIndex === 6}>
-          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1100px, 100%)' }}>
-            <div className="hook-label">POSITIONING</div>
-            <h2>Why not just use what exists?</h2>
-            <RelatedWorkTable visible={showRelatedTable} />
-          </div>
-        </SectionFrame>
-
-        {/* ── Slide 8: Components ── */}
-        <SectionFrame id="hook-components" isActive={currentSectionIndex === 7}>
-          <div className={`hook-inner hook-components intro-content ${dir}`}>
-            <h2>Three components. One mesh.</h2>
-            <p className="hook-subline">Each plays a distinct role in the network.</p>
-            <ComponentsCards visible={currentSectionIndex === 7} onOpen={setOpenComponent} />
-          </div>
-        </SectionFrame>
-
-        {/* ── Slide 9: Live Demo ── */}
-        <SectionFrame id="hook-demo" isActive={currentSectionIndex === 8}>
-          <LiveDemoSlide isActive={currentSectionIndex === 8} />
-        </SectionFrame>
-
-        {/* ── Slide 10: Architecture ── */}
-        <SectionFrame id="hook-architecture" isActive={currentSectionIndex === 9}>
+        {/* ── Slide 08: Architecture ── */}
+        <SectionFrame id="hook-architecture" isActive={currentSectionIndex === 7}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1000px, 100%)' }}>
             <div className="hook-label">SYSTEM DESIGN</div>
-            <h2>The full topology.</h2>
+            <h2>System Model</h2>
             <ArchitectureDiagram active={archActive} />
             <p className="hook-subline">Two BLE clusters, one LoRa bridge. The inter-cluster hop is completely transparent to end nodes — they see only BLE.</p>
           </div>
         </SectionFrame>
 
-        {/* ── Slide 11: Packet Format ── */}
-        <SectionFrame id="hook-packet" isActive={currentSectionIndex === 10}>
-          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(960px, 100%)' }}>
-            <div className="hook-label">PROTOCOL DESIGN</div>
-            <h2>Every byte has a purpose.</h2>
-            <PacketFormatDiagram active={packetActive} />
-            <p className="hook-subline">250-byte cap optimized for LoRa airtime constraints. Only the nonce and ciphertext cross the relay — plaintext never leaves the originating device.</p>
+        {/* ── Slide 09: Components ── */}
+        <SectionFrame id="hook-components" isActive={currentSectionIndex === 8}>
+          <div className={`hook-inner hook-components intro-content ${dir}`}>
+            <h2>System Components</h2>
+            <p className="hook-subline">Each plays a distinct role in the network.</p>
+            <ComponentsCards visible={currentSectionIndex === 8} onOpen={setOpenComponent} />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 12: Numbers ── */}
-        <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 11}>
-          <div className={`hook-inner hook-numbers intro-content ${dir}`}>
-            <NumbersSlide visibleCount={visibleNumberCount} />
+        {/* ── Slide 10: Live Demo ── */}
+        <SectionFrame id="hook-demo" isActive={currentSectionIndex === 9}>
+          <LiveDemoSlide isActive={currentSectionIndex === 9} />
+        </SectionFrame>
+
+        {/* ── Slide 11: Packet Format ── */}
+        <SectionFrame id="hook-packet" isActive={currentSectionIndex === 10}>
+          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1080px, 100%)' }}>
+            <div className="hook-label">PROTOCOL DESIGN</div>
+            <h2>Packet Design</h2>
+            <PacketFormatDiagram active={packetActive} />
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 12: Flooding Algorithm ── */}
+        <SectionFrame id="hook-flooding" isActive={currentSectionIndex === 11}>
+          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1140px, 100%)' }}>
+            <div className="hook-label">ROUTING PROTOCOL</div>
+            <h2>Managed Flooding Algorithm</h2>
+            <FloodingAlgorithmSlide isActive={currentSectionIndex === 11} />
           </div>
         </SectionFrame>
 
         {/* ── Slide 13: Security Overview ── */}
         <SectionFrame id="hook-security" isActive={currentSectionIndex === 12}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <h2>No relay ever reads your message.</h2>
-            <p className="hook-subline">End-to-end encrypted. Always.</p>
+            <h2>Security Design</h2>
+            <p className="hook-subline">End-to-end encryption via Curve25519 ECDH + AES-128-GCM with out-of-band QR key exchange.</p>
             <EncryptionFlowAnimation replayKey={cryptoReplayKey} />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 14: Security Deep Dive ── */}
-        <SectionFrame id="hook-security-deep" isActive={currentSectionIndex === 13}>
+        {/* ── Slide 14: Security Scenarios ── */}
+        <SectionFrame id="hook-security-scenarios" isActive={currentSectionIndex === 13}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
-            <div className="hook-label">SECURITY DEEP DIVE</div>
-            <h2>The key never crosses the air.</h2>
+            <div className="hook-label">SECURITY EVALUATION</div>
+            <h2>Attack Scenarios</h2>
+            <SecurityScenariosSlide />
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 15: Threat Model ── */}
+        <SectionFrame id="hook-security-deep" isActive={currentSectionIndex === 14}>
+          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
+            <div className="hook-label">SECURITY ANALYSIS</div>
+            <h2>Threat Model</h2>
             <SecurityDeepDiveAnimation replayKey={secDeepReplayKey} />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 15: Transition ── */}
-        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 14}>
+        {/* ── Slide 16: Key Results ── */}
+        <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 15}>
+          <div className={`hook-inner hook-numbers intro-content ${dir}`}>
+            <div className="hook-label">EXPERIMENTAL RESULTS</div>
+            <h2>Key Results</h2>
+            <NumbersSlide visibleCount={visibleNumberCount} />
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 17: Comparison ── */}
+        <SectionFrame id="hook-related" isActive={currentSectionIndex === 16}>
+          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1100px, 100%)' }}>
+            <div className="hook-label">LITERATURE REVIEW</div>
+            <h2>Comparison with Existing Systems</h2>
+            <RelatedWorkTable visible={showRelatedTable} />
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 18: Closing / Enter System ── */}
+        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 17}>
           <div className={`hook-inner transition-inner intro-content ${dir}`}>
-            <div className="hook-label">ACT 2 · EXPLAINER</div>
-            <h2>This is Peer Reach.</h2>
+            <div className="hook-label">CONCLUSION</div>
+            <h2>Peer Reach</h2>
             <p className="hook-subline">A working prototype. A real mesh. Let's show you how it works.</p>
             <button className="enter-system-btn" onClick={onEnterSystem}>Enter the System →</button>
           </div>
