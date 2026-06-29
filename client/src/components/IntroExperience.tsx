@@ -77,8 +77,9 @@ const INTRO_SECTION_IDS = [
   'hook-results-mdr',         // 17 — NEW: MDR vs distance bar chart
   'hook-results-range',       // 18 — NEW: BLE vs LoRa range circles
   'hook-results-lora',        // 19 — NEW: LoRa field tests
-  'hook-related',             // 20
-  'hook-transition',          // 21
+  'hook-results-cdf',         // 20 — NEW: ACK RTT CDF
+  'hook-related',             // 21
+  'hook-transition',          // 22
 ] as const;
 
 const TOTAL_SLIDES = INTRO_SECTION_IDS.length;
@@ -1449,6 +1450,110 @@ function LoRaFieldTests({ active }: { active: boolean }) {
   );
 }
 
+// ─── Result Slide D: ACK RTT CDF ─────────────────────────────────────────────
+function ACKCDFChart({ active }: { active: boolean }) {
+  const W = 820, H = 320, PL = 58, PR = 20, PT = 18, PB = 58;
+  const chartW = W - PL - PR;
+  const chartH = H - PT - PB;
+  const maxX = 4500;
+
+  const toX = (ms: number) => PL + (ms / maxX) * chartW;
+  const toY = (prob: number) => PT + chartH - prob * chartH;
+
+  const pathD = (pts: [number, number][]) =>
+    pts.map(([ms, p], i) => `${i === 0 ? 'M' : 'L'}${toX(ms).toFixed(1)},${toY(p).toFixed(1)}`).join(' ');
+
+  // Aggregate bold line
+  const agg: [number, number][] = [
+    [0,0],[150,0.01],[300,0.05],[450,0.14],[550,0.24],[650,0.37],
+    [750,0.47],[849,0.58],[950,0.63],[1100,0.68],[1300,0.73],
+    [1500,0.78],[1700,0.82],[1900,0.85],[2100,0.87],[2300,0.89],
+    [2480,0.90],[2700,0.92],[3000,0.94],[3500,0.97],[4000,0.985],[4500,1.0],
+  ];
+
+  // Per-session lighter lines (approximated from Figure 8.2)
+  const sessions: { pts: [number, number][]; col: string; op: number }[] = [
+    { pts:[[0,0],[200,0.05],[400,0.22],[600,0.5],[800,0.68],[1000,0.82],[1300,0.93],[1800,0.99],[2200,1.0]], col:'#93c5fd', op:0.5 },
+    { pts:[[0,0],[300,0.04],[600,0.28],[900,0.54],[1200,0.72],[1600,0.86],[2200,0.95],[3000,0.99],[3500,1.0]], col:'#94a3b8', op:0.4 },
+    { pts:[[0,0],[400,0.03],[700,0.14],[1000,0.34],[1400,0.57],[1800,0.72],[2200,0.82],[2800,0.9],[3500,0.97],[4500,1.0]], col:'#94a3b8', op:0.35 },
+    { pts:[[0,0],[600,0.04],[1000,0.1],[1500,0.27],[2000,0.51],[2500,0.71],[3000,0.85],[3800,0.95],[4500,1.0]], col:'#f59e0b', op:0.55 },
+    { pts:[[0,0],[500,0.14],[800,0.44],[1100,0.67],[1400,0.81],[1800,0.91],[2500,0.97],[3200,1.0]], col:'#93c5fd', op:0.35 },
+  ];
+
+  const xTicks = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500];
+  const yTicks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+
+  return (
+    <div className={`res-chart-wrap ${active ? 'is-active' : ''}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxHeight: 330 }}>
+        {/* Y grid + labels */}
+        {yTicks.map(v => (
+          <g key={v}>
+            <line x1={PL} y1={toY(v)} x2={W - PR} y2={toY(v)}
+              stroke="var(--intro-border-soft)" strokeWidth={v === 0 ? 1 : 0.6} strokeDasharray={v === 0 ? '0' : '3 3'} />
+            <text x={PL - 6} y={toY(v) + 4} textAnchor="end"
+              fill="var(--intro-text-faint)" fontSize="9" fontFamily="var(--font-mono,monospace)">{v.toFixed(1)}</text>
+          </g>
+        ))}
+        {/* X grid + labels */}
+        {xTicks.map(v => (
+          <g key={v}>
+            {v > 0 && <line x1={toX(v)} y1={PT} x2={toX(v)} y2={PT + chartH}
+              stroke="var(--intro-border-soft)" strokeWidth="0.6" strokeDasharray="3 3" />}
+            <text x={toX(v)} y={PT + chartH + 14} textAnchor="middle"
+              fill="var(--intro-text-faint)" fontSize="9" fontFamily="var(--font-mono,monospace)">{v}</text>
+          </g>
+        ))}
+        {/* Axes */}
+        <line x1={PL} y1={PT} x2={PL} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
+        <line x1={PL} y1={PT + chartH} x2={W - PR} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
+
+        {/* Axis labels */}
+        <text x={12} y={PT + chartH / 2} textAnchor="middle"
+          fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)"
+          transform={`rotate(-90,12,${PT + chartH / 2})`}>Cumulative probability</text>
+        <text x={PL + chartW / 2} y={H - 4} textAnchor="middle"
+          fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)">ACK Round-Trip Time (ms)</text>
+
+        {/* Per-session lines */}
+        {sessions.map((s, i) => (
+          <path key={i} d={pathD(s.pts)} fill="none" stroke={s.col} strokeWidth="1.2" opacity={s.op} />
+        ))}
+
+        {/* P50 dashed reference */}
+        <line x1={PL} y1={toY(0.58)} x2={toX(849)} y2={toY(0.58)}
+          stroke="var(--intro-text-faint)" strokeWidth="0.8" strokeDasharray="4 3" />
+        <line x1={toX(849)} y1={toY(0.58)} x2={toX(849)} y2={PT + chartH}
+          stroke="var(--intro-text-faint)" strokeWidth="0.8" strokeDasharray="4 3" />
+        <text x={toX(849) + 4} y={toY(0.58) - 5}
+          fill="var(--intro-text-muted)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">P50 = 849 ms</text>
+
+        {/* P90 dashed reference */}
+        <line x1={PL} y1={toY(0.90)} x2={toX(2480)} y2={toY(0.90)}
+          stroke="#f59e0b" strokeWidth="0.8" strokeDasharray="4 3" opacity="0.7" />
+        <line x1={toX(2480)} y1={toY(0.90)} x2={toX(2480)} y2={PT + chartH}
+          stroke="#f59e0b" strokeWidth="0.8" strokeDasharray="4 3" opacity="0.7" />
+        <text x={toX(2480) + 4} y={toY(0.90) - 5}
+          fill="#f59e0b" fontSize="8.5" fontFamily="var(--font-mono,monospace)">P90 = 2480 ms</text>
+
+        {/* Aggregate bold line */}
+        <path d={pathD(agg)} fill="none" stroke="#1e40af" strokeWidth="2.8" opacity="0.9" />
+        <path d={pathD(agg)} fill="none" stroke="#60a5fa" strokeWidth="1.6" opacity="0.7" />
+
+        {/* Legend */}
+        <line x1={W - 170} y1={PT + 14} x2={W - 148} y2={PT + 14} stroke="#1e40af" strokeWidth="2.5" />
+        <line x1={W - 170} y1={PT + 14} x2={W - 148} y2={PT + 14} stroke="#60a5fa" strokeWidth="1.4" />
+        <text x={W - 143} y={PT + 18} fill="var(--intro-text-dim)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Aggregate (all sessions)</text>
+        <line x1={W - 170} y1={PT + 28} x2={W - 148} y2={PT + 28} stroke="#94a3b8" strokeWidth="1.2" opacity="0.5" />
+        <text x={W - 143} y={PT + 32} fill="var(--intro-text-faint)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Per-distance sessions</text>
+      </svg>
+      <p style={{ textAlign:'center', fontSize:12, color:'var(--intro-text-muted)', fontFamily:'var(--font-mono,monospace)', marginTop:6 }}>
+        P50 latency 849 ms · P90 latency 2480 ms · outliers at 10 m attributed to advertising channel saturation
+      </p>
+    </div>
+  );
+}
+
 // ─── Slide 11: Key Metrics (6-metric grid) ───────────────────────────────────
 function NumbersSlide({ visibleCount }: { visibleCount: number }) {
   const metrics = [
@@ -2176,9 +2281,9 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
     return () => window.clearTimeout(t);
   }, [currentSectionIndex, showProblemList]);
 
-  // Related table (index 20 = hook-related)
+  // Related table (index 21 = hook-related)
   useEffect(() => {
-    if (currentSectionIndex !== 20) return;
+    if (currentSectionIndex !== 21) return;
     const t = window.setTimeout(() => setShowRelatedTable(true), 400);
     return () => window.clearTimeout(t);
   }, [currentSectionIndex]);
@@ -2421,8 +2526,17 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 20: Comparison ── */}
-        <SectionFrame id="hook-related" isActive={currentSectionIndex === 20}>
+        {/* ── Slide 20: ACK RTT CDF ── */}
+        <SectionFrame id="hook-results-cdf" isActive={currentSectionIndex === 20}>
+          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(900px, 100%)' }}>
+            <div className="hook-label">EXPERIMENTAL RESULTS</div>
+            <h2>ACK Round-Trip Time Distribution</h2>
+            <ACKCDFChart active={currentSectionIndex === 20} />
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 21: Comparison ── */}
+        <SectionFrame id="hook-related" isActive={currentSectionIndex === 21}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1100px, 100%)' }}>
             <div className="hook-label">LITERATURE REVIEW</div>
             <h2>Comparison with Existing Systems</h2>
@@ -2430,8 +2544,8 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 21: Closing / Enter System ── */}
-        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 21}>
+        {/* ── Slide 22: Closing / Enter System ── */}
+        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 22}>
           <div className={`hook-inner transition-inner intro-content ${dir}`}>
             <div className="hook-label">CONCLUSION</div>
             <h2>Peer Reach</h2>
