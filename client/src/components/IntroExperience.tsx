@@ -70,8 +70,9 @@ const INTRO_SECTION_IDS = [
   'hook-packet',              // 10
   'hook-flooding',            // 11
   'hook-security',            // 12
-  'hook-security-scenarios',  // 13
-  'hook-security-deep',       // 14
+  'hook-security-framework',            // 13
+  'hook-security-deep',       // 13
+  'hook-security-scenarios',  // 14
   'hook-numbers',             // 15
   'hook-related',             // 16
   'hook-transition',          // 17
@@ -117,18 +118,124 @@ const AGENDA_ITEMS = [
 function AgendaSlide() {
   return (
     <div className="agenda-slide">
-      <div className="hook-label">TABLE OF CONTENTS</div>
       <h2 className="agenda-title">Agenda</h2>
-      <ol className="agenda-list">
-        {AGENDA_ITEMS.map((item, i) => (
-          <li key={item.num} className="agenda-item" style={{ '--ai': i } as React.CSSProperties}>
-            <span className="agenda-num">{item.num}</span>
-            <div className="agenda-body">
-              <span className="agenda-label">{item.label}</span>
+      
+      <div className="timeline-container">
+        {AGENDA_ITEMS.map((item, i) => {
+          // Odd numbers (1, 3, 5...) go on top, Evens (2, 4, 6...) go on bottom
+          const isTop = item.num % 2 !== 0;
+
+          return (
+            <div key={item.num} className="timeline-item" style={{ height: '220px' }}>
+              
+              {isTop ? (
+                <div className="timeline-content-top">
+                  <span>{item.label}</span>
+                </div>
+              ) : (
+                <div className="timeline-content-bottom">
+                  <span>{item.label}</span>
+                </div>
+              )}
+
+              <div className="timeline-circle">
+                {item.num}
+              </div>
+
             </div>
-          </li>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Slide 12: Security Framework ───────────────────────────────────────────
+const SECURITY_ITEMS = [
+  {
+    title: "Confidentiality",
+    desc: "Only the intended receiver can read messages.",
+    isWide: false,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+    )
+  },
+  {
+    title: "Integrity",
+    desc: "Detect any message modification.",
+    isWide: false,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        <path d="m9 12 2 2 4-4"></path>
+      </svg>
+    )
+  },
+  {
+    title: "Authentication",
+    desc: "Verify communicating users.",
+    isWide: false,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M22 11h-6"></path>
+      </svg>
+    )
+  },
+  {
+    title: "Privacy",
+    desc: "Protect user identity.",
+    isWide: true,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    )
+  },
+  {
+    title: "Availability",
+    desc: "Communication continues without internet.",
+    isWide: true,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+        <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20" strokeWidth="3"></line>
+      </svg>
+    )
+  }
+];
+
+function SecurityFrameworkSlide({ visible }: { visible: boolean }) {
+  return (
+    <div className="security-slide">
+      <div className="hook-label">PROTOCOLS</div>
+      <h2 className="security-title">Security Framework</h2>
+      
+      <div className="security-grid">
+        {SECURITY_ITEMS.map((item, i) => (
+          <div 
+            key={item.title} 
+            className={`security-card ${item.isWide ? 'wide-card' : ''}`}
+            style={{ 
+              '--si': i,
+              animationPlayState: visible ? 'running' : 'paused'
+            } as React.CSSProperties}
+          >
+            <div className="security-icon-wrapper">
+              {item.icon}
+            </div>
+            <h3 className="security-card-title">{item.title}</h3>
+            <p className="security-card-desc">{item.desc}</p>
+          </div>
         ))}
-      </ol>
+      </div>
     </div>
   );
 }
@@ -1851,7 +1958,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
 
   // Numbers (index 15 = hook-numbers)
   useEffect(() => {
-    if (currentSectionIndex !== 15) { setVisibleNumberCount(0); return; }
+    if (currentSectionIndex !== 16) { setVisibleNumberCount(0); return; }
     setVisibleNumberCount(0);
     const ts = [120, 280, 440, 600, 760, 920].map((ms, i) =>
       window.setTimeout(() => setVisibleNumberCount(i + 1), ms)
@@ -1914,7 +2021,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
 
         {/* ── Slide 02: Agenda ── */}
         <SectionFrame id="hook-agenda" isActive={currentSectionIndex === 1}>
-          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(860px, 100%)' }}>
+          <div className={`hook-inner intro-content ${dir}`}>
             <AgendaSlide />
           </div>
         </SectionFrame>
@@ -2016,12 +2123,10 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 14: Security Scenarios ── */}
-        <SectionFrame id="hook-security-scenarios" isActive={currentSectionIndex === 13}>
-          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
-            <div className="hook-label">SECURITY EVALUATION</div>
-            <h2>Attack Scenarios</h2>
-            <SecurityScenariosSlide />
+        {/* ── Slide 12: Security Framework ── */}
+        <SectionFrame id="hook-security-framework" isActive={currentSectionIndex === 13}>
+          <div className={`hook-inner intro-content ${dir}`}>
+            <SecurityFrameworkSlide visible={currentSectionIndex === 13} />
           </div>
         </SectionFrame>
 
@@ -2034,8 +2139,17 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
+        {/* ── Slide 14: Security Scenarios ── */}
+        <SectionFrame id="hook-security-scenarios" isActive={currentSectionIndex === 15}>
+          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
+            <div className="hook-label">SECURITY EVALUATION</div>
+            <h2>Attack Scenarios</h2>
+            <SecurityScenariosSlide />
+          </div>
+        </SectionFrame>
+
         {/* ── Slide 16: Key Results ── */}
-        <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 15}>
+        <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 16}>
           <div className={`hook-inner hook-numbers intro-content ${dir}`}>
             <div className="hook-label">EXPERIMENTAL RESULTS</div>
             <h2>Key Results</h2>
@@ -2044,7 +2158,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         </SectionFrame>
 
         {/* ── Slide 17: Comparison ── */}
-        <SectionFrame id="hook-related" isActive={currentSectionIndex === 16}>
+        <SectionFrame id="hook-related" isActive={currentSectionIndex === 17}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1100px, 100%)' }}>
             <div className="hook-label">LITERATURE REVIEW</div>
             <h2>Comparison with Existing Systems</h2>
@@ -2053,7 +2167,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         </SectionFrame>
 
         {/* ── Slide 18: Closing / Enter System ── */}
-        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 17}>
+        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 18}>
           <div className={`hook-inner transition-inner intro-content ${dir}`}>
             <div className="hook-label">CONCLUSION</div>
             <h2>Peer Reach</h2>

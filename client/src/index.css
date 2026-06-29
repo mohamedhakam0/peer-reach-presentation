@@ -618,7 +618,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .hook-inner {
-  width: min(980px, 100%);
+  width: min(1030px, 100%);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -2572,79 +2572,212 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 0 0 3px 0;
 }
 
-/* ─── Agenda slide ────────────────────────────────────────────────────────────── */
+/* ─── Horizontal Timeline Agenda (image_d8cfbf.png Style) ─── */
 .agenda-slide {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
   width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px;
 }
 
 .agenda-title {
-  margin: 0 0 22px;
   font-family: var(--font-sans, 'General Sans', sans-serif);
-  font-size: clamp(32px, 4.5vw, 58px);
-  letter-spacing: -0.015em;
-  font-weight: 600;
-  color: var(--intro-text);
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 700;
+  color: #0b2559; /* Matching the deep navy in image_d8cfbf.png */
+  margin-bottom: 80px;
+  text-align: center;
 }
 
-.agenda-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* Timeline Track Container */
+.timeline-container {
+  position: relative;
   display: flex;
-  gap: 0;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 40px;
 }
 
-.agenda-item {
+/* Horizontal line spanning across the middle */
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #a2c4e8; /* Soft blue track line */
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+/* Individual Timeline Node Column */
+.timeline-item {
+  position: relative;
   display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 18px;
-  padding: 30px 15px;
-  border: 1px solid var(--intro-border-soft);
-  opacity: 0;
-  transform: translateX(-10px);
-  animation: pli-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: calc(var(--ai, 0) * 60ms + 100ms);
-  width: 31%;
-  margin: 1%;
-}
-
-.agenda-num {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: var(--intro-cyan);
-  flex-shrink: 0;
-  width: 46px;
-  padding-top: 1px;
-}
-
-.agenda-body {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
+  flex-direction: column;
+  align-items: center;
   flex: 1;
-  flex-wrap: wrap;
+  z-index: 2;
+}
+
+/* Center circle containing the index number */
+.timeline-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #d1e4ff; /* Light blue circle background */
+  color: #0b2559;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Content wrappers for text placement */
+.timeline-content-top,
+.timeline-content-bottom {
+  position: absolute;
+  width: 110px;
+  text-align: center;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: #0b2559;
+  line-height: 1.3;
+}
+
+/* Alternating positions and connecting vertical ticks */
+.timeline-content-top {
+  bottom: 0; /* Suspended above the center circle */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 90px;
+}
+
+.timeline-content-top::after {
+  content: '';
+  width: 2px;
+  height: 40px;
+  background-color: #a2c4e8;
+  top: -5px;
+  position: absolute;
+}
+
+.timeline-content-bottom {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  height: 90px;
+  top: 0 
+}
+
+.timeline-content-bottom::after {
+  content: '';
+  width: 2px;
+  height: 40px;
+  background-color: #a2c4e8;
+  bottom: -5px;
+  position: absolute;
+}
+
+/* ─── Premium Security Grid (image_db1d76.png Adaption) ─── */
+.security-slide {
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, 100%);
+  margin: 0 auto;
+}
+
+.security-title {
+  margin: 8px 0 40px;
+  font-family: var(--font-sans, 'General Sans', sans-serif);
+  font-size: clamp(32px, 4vw, 56px);
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  color: var(--intro-text);
+}
+
+/* Elegant asymmetrical grid layout */
+.security-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 20px;
+}
+
+/* Card Styling matching your platform's luxury theme */
+.security-card {
+  grid-column: span 2; /* Default: 3 cards on top row */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 32px;
+  background-color: transparent;
+  border: 1px solid var(--intro-border-soft);
+  border-radius: 4px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: sectionChildEnter 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--si, 0) * 60ms + 150ms);
+  transition: border-color 250ms ease, background-color 250ms ease;
+}
+
+/* Bottom row maps out wider just like image_db1d76.png */
+.security-card.wide-card {
+  grid-column: span 3;
+}
+
+.security-card:hover {
+  border-color: var(--intro-border);
+  background-color: var(--intro-surface);
+}
+
+/* Icon Container */
+.security-icon-wrapper {
+  color: var(--intro-cyan);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
   justify-content: center;
 }
 
-.agenda-label {
+.security-card-title {
   font-family: var(--font-sans, 'General Sans', sans-serif);
-  font-size: clamp(14px, 1.6vw, 17px);
+  font-size: 20px;
   font-weight: 600;
   color: var(--intro-text);
-  min-width: 180px;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
 }
 
-.agenda-desc {
-  font-family: var(--font-sans, 'General Sans', sans-serif);
-  font-size: clamp(12px, 1.3vw, 14px);
+.security-card-desc {
+  font-family: var(--font-sans, sans-serif);
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--intro-text-muted);
-  line-height: 1.5;
+}
+
+/* Responsive adjustment for clean presentation views */
+@media (max-width: 868px) {
+  .security-grid {
+    grid-template-columns: 1fr;
+  }
+  .security-card, .security-card.wide-card {
+    grid-column: span 1;
+    padding: 24px;
+  }
 }
 
 @media (max-width: 768px) {
