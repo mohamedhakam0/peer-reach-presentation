@@ -182,21 +182,6 @@ function AbstractSlide() {
       <blockquote className="abstract-quote">
         "A hybrid BLE-LoRa mesh protocol enabling encrypted, infrastructure-free messaging across smartphones and embedded devices — no internet required."
       </blockquote>
-      <ul className="abstract-achievements">
-        <li>
-          <span className="ach-marker" style={{ background: CYAN }} />
-          <span>Designed a novel hybrid protocol combining BLE 5.0 and LoRa with transparent multi-cluster bridging</span>
-        </li>
-        <li>
-          <span className="ach-marker" style={{ background: GOLD }} />
-          <span>End-to-end encryption via Curve25519 ECDH + AES-128-GCM with QR out-of-band key exchange</span>
-        </li>
-        <li>
-          <span className="ach-marker" style={{ background: WHITE }} />
-          <span>Interactive web simulator with 6 animated protocol scenarios and live sandbox topology builder</span>
-        </li>
-      </ul>
-      <p className="abstract-tagline">Offline · Decentralized · Encrypted · No Infrastructure</p>
     </div>
   );
 }
@@ -406,7 +391,6 @@ const COMPONENT_SPECS: Record<ComponentKey, {
       { key: 'Coding rate',       value: '4/5' },
       { key: 'Sensitivity',       value: '−128 dBm' },
       { key: 'Range (LOS)',       value: 'Up to 3 km line-of-sight' },
-      { key: 'Range (tested)',    value: '1,500 m real-world deployment' },
       { key: 'Max payload',       value: '255 B (protocol caps at 250 B)' },
     ],
   },
@@ -1718,16 +1702,6 @@ function SecurityScenariosSlide() {
           <div className="scenario-header">
             <span className="scenario-num" style={{ color: s.color }}>{s.num}</span>
             <span className="scenario-title" style={{ color: s.color }}>{s.title}</span>
-          </div>
-          <div className="scenario-body">
-            <div className="scenario-row">
-              <span className="scenario-badge attack">ATTACK</span>
-              <p className="scenario-text">{s.attack}</p>
-            </div>
-            <div className="scenario-row">
-              <span className="scenario-badge defense">DEFENSE</span>
-              <p className="scenario-text">{s.defense}</p>
-            </div>
           </div>
         </div>
       ))}
