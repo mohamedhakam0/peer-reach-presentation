@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const DEEP_BLACK = 'var(--intro-bg)';
 const WHITE = 'var(--intro-text)';
@@ -1212,32 +1213,104 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
   );
 }
 
-// ─── Slide 11: Key Metrics (6-metric grid) ───────────────────────────────────
+// ─── Result Image Lightbox ────────────────────────────────────────────────
+interface ResultImage {
+  id: string;
+  path: string;
+  title: string;
+  caption: string;
+}
+
+const RESULT_IMAGES: ResultImage[] = [
+  {
+    id: 'rssi-distance',
+    path: '/results/rssi-vs-distance.png',
+    title: 'RSSI vs Distance',
+    caption: 'Figure 8.3: Mean received RSSI vs. distance (log scale). Open-space measurements with error bars; through-wall measurements showing 7–15 dB excess insertion loss through a 20 cm concrete wall.'
+  },
+  {
+    id: 'ack-latency',
+    path: '/results/ack-round-trip.png',
+    title: 'ACK Round-Trip Time',
+    caption: 'Figure 8.2: Cumulative distribution of ACK round-trip time across all BLE direct-link sessions. P50 latency is 849 ms; P90 is 2480 ms. Outliers above 4000 ms attributed to advertising channel saturation.'
+  },
+  {
+    id: 'packet-mdr',
+    path: '/results/packet-mdr.png',
+    title: 'Packet & ACK Delivery Rate',
+    caption: 'Message Delivery Rate (MDR) and ACK-MDR across various distances. Packet MDR remains high in open space; through-wall degradation expected due to concrete attenuation.'
+  },
+  {
+    id: 'lora-range-1',
+    path: '/results/distance-measurement-1.png',
+    title: 'LoRa Range Test 1',
+    caption: 'LoRa long-range test: 1,591.82 m measured distance across outdoor terrain with ~38 m elevation change. Demonstrates robust reception across geographic distance.'
+  },
+  {
+    id: 'lora-range-2',
+    path: '/results/distance-measurement-2.png',
+    title: 'LoRa Range Test 2',
+    caption: 'Second LoRa field test: 801.45 m measured distance with ~4 m elevation variation, validating repeatability of long-range performance in urban environment.'
+  },
+];
+
+function ImageLightbox({ image, onClose }: { image: ResultImage; onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <div className="lightbox-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="lightbox-container">
+        <button className="lightbox-close" onClick={onClose} aria-label="Close">✕</button>
+        
+        <div className="lightbox-content">
+          <img src={image.path} alt={image.title} className="lightbox-image" />
+          <div className="lightbox-caption">
+            <h3>{image.title}</h3>
+            <p>{image.caption}</p>
+          </div>
+        </div>
+
+        <p className="lightbox-hint">Press ESC or click outside to close</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Slide 16: Key Results (image gallery) ───────────────────────────────────
 function NumbersSlide({ visibleCount }: { visibleCount: number }) {
-  const metrics = [
-    { value: '<2',    unit: 's',   label: 'END-TO-END LATENCY',        sub: 'measured across 5 hops in testing',              color: CYAN },
-    { value: '1,500', unit: 'm',   label: 'TESTED LORA RANGE',         sub: 'real-world outdoor deployment · SX1276',         color: GOLD },
-    { value: '20',    unit: 'm',   label: 'BLE PER-HOP RANGE',         sub: 'LE Coded PHY — indoor tested',                   color: CYAN },
-    { value: '200',   unit: '',    label: 'DEDUP CACHE SIZE',           sub: 'seen_msg_ids ring buffer per relay node',         color: GOLD },
-    { value: '250',   unit: 'B',   label: 'PACKET SIZE CAP',           sub: 'optimized for LoRa airtime constraints',          color: CYAN },
-    { value: '5',     unit: '',    label: 'MAX HOP COUNT (TTL)',        sub: 'flood-limited with managed jitter rebroadcast',   color: GOLD },
-  ];
+  const [selectedImage, setSelectedImage] = useState<ResultImage | null>(null);
 
   return (
     <div className="numbers-grid-wrap">
-      <div className="numbers-grid">
-        {metrics.map((m, i) => (
-          <div key={i} className={`ngrid-card ${visibleCount > i ? 'is-visible' : ''}`}
-            style={{ '--ng-delay': `${i * 160}ms` } as React.CSSProperties}>
-            <div className="ngrid-rule" style={{ background: m.color }} />
-            <div className="ngrid-value">
-              {m.value}<span className="ngrid-unit" style={{ color: m.color }}>{m.unit}</span>
+      <div className="results-gallery">
+        {RESULT_IMAGES.map((img, i) => (
+          <button
+            key={img.id}
+            className={`results-card ${visibleCount > i ? 'is-visible' : ''}`}
+            onClick={() => setSelectedImage(img)}
+            style={{ '--ng-delay': `${i * 160}ms` } as React.CSSProperties}
+            aria-label={`View ${img.title}`}
+          >
+            <div className="results-card-image">
+              <img src={img.path} alt={img.title} loading="lazy" />
+              <div className="results-card-overlay">
+                <span className="results-expand-icon">↗</span>
+              </div>
             </div>
-            <div className="ngrid-label">{m.label}</div>
-            <p className="ngrid-sub">{m.sub}</p>
-          </div>
+            <div className="results-card-label">{img.title}</div>
+          </button>
         ))}
       </div>
+
+      {/* This renders the lightbox directly at the bottom of <body> */}
+      {selectedImage && createPortal(
+        <ImageLightbox image={selectedImage} onClose={() => setSelectedImage(null)} />,
+        document.body
+      )}
     </div>
   );
 }
@@ -1406,7 +1479,7 @@ function SecurityDeepDiveAnimation({ replayKey }: { replayKey: number }) {
       </div>
 
       {/* ── Threat model ── */}
-      <div className="sec-threat-grid">
+      <div className="sec-threat-grid" style={{ display: 'none' }}>
         <div className="sec-threat-col sec-threat-can">
           <div className="sec-threat-head" style={{ color: '#f87171' }}>What a compromised relay CAN see</div>
           {['msg_id (opaque identifier)', 'TTL remaining', 'receiver_id (identifier only)', 'Encrypted ciphertext blob', 'Nonce (public, not the key)'].map((s, i) => (
