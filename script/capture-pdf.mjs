@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const APP_URL = 'http://localhost:5000/#/intro';
+const APP_URL = 'http://localhost:5000';
 const OUT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'slides');
 const PDF_OUT = path.join('C:\\Users\\pc\\Desktop', 'peer-reach-presentation.pdf');
 

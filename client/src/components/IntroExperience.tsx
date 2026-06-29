@@ -103,15 +103,15 @@ function SlideNumber({ current }: { current: number }) {
 
 // ─── Agenda slide ─────────────────────────────────────────────────────────────
 const AGENDA_ITEMS = [
-  { num: '03',    label: 'Thesis Overview',    desc: 'Abstract and research contributions' },
-  { num: '04',    label: 'Problem Statement',  desc: 'Communication failures in infrastructure-less environments' },
-  { num: '05–07', label: 'Background',         desc: 'Objectives · BLE range limitation · proposed solution' },
-  { num: '08',    label: 'System Model',       desc: 'Full network topology and architecture' },
-  { num: '09–10', label: 'System & Demo',      desc: 'Hardware components · live app walkthrough' },
-  { num: '11',    label: 'Packet Design',      desc: 'Protocol structure · 42-byte header · AES-128-GCM' },
-  { num: '12–14', label: 'Security',           desc: 'Security design · attack scenarios · threat model' },
-  { num: '15',    label: 'Key Results',        desc: 'Range · latency · throughput · hop count' },
-  { num: '16',    label: 'Comparison',         desc: 'Peer Reach vs. Meshtastic, Bridgefy, GoTenna' },
+  { num: '',    label: 'Thesis Overview',    desc: 'Abstract and research contributions' },
+  { num: '',    label: 'Problem Statement',  desc: 'Communication failures in infrastructure-less environments' },
+  { num: '', label: 'Background',         desc: 'Objectives · BLE range limitation · proposed solution' },
+  { num: '',    label: 'System Model',       desc: 'Full network topology and architecture' },
+  { num: '', label: 'System & Demo',      desc: 'Hardware components · live app walkthrough' },
+  { num: '',    label: 'Packet Design',      desc: 'Protocol structure · 42-byte header · AES-128-GCM' },
+  { num: '', label: 'Security',           desc: 'Security design · attack scenarios · threat model' },
+  { num: '',    label: 'Key Results',        desc: 'Range · latency · throughput · hop count' },
+  { num: '',    label: 'Comparison',         desc: 'Peer Reach vs. Meshtastic, Bridgefy, GoTenna' },
 ];
 
 function AgendaSlide() {

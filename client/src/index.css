@@ -1227,15 +1227,15 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .intro-nav-dots {
-  position: fixed;
-  right: clamp(10px, 2vw, 24px);
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  z-index: 10;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
 }
 
 .intro-nav-dot {
@@ -2336,7 +2336,7 @@ input[type="range"]::-moz-range-thumb {
   }
 
   .intro-nav-dots {
-    right: 8px;
+    left: 8px;
     gap: 8px;
   }
 
@@ -2534,6 +2534,8 @@ input[type="range"]::-moz-range-thumb {
     0 8px 24px rgba(0,0,0,0.5);
   background: #0A0C10;
   flex-shrink: 0;
+  height: 100% !important;
+  width: 340px !important;
 }
 
 /* transparent drag zone that sits over the mockup's own title bar */
