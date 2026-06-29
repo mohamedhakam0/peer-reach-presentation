@@ -103,15 +103,15 @@ function SlideNumber({ current }: { current: number }) {
 
 // ─── Agenda slide ─────────────────────────────────────────────────────────────
 const AGENDA_ITEMS = [
-  { num: '',    label: 'Thesis Overview',    desc: 'Abstract and research contributions' },
-  { num: '',    label: 'Problem Statement',  desc: 'Communication failures in infrastructure-less environments' },
-  { num: '', label: 'Background',         desc: 'Objectives · BLE range limitation · proposed solution' },
-  { num: '',    label: 'System Model',       desc: 'Full network topology and architecture' },
-  { num: '', label: 'System & Demo',      desc: 'Hardware components · live app walkthrough' },
-  { num: '',    label: 'Packet Design',      desc: 'Protocol structure · 42-byte header · AES-128-GCM' },
-  { num: '', label: 'Security',           desc: 'Security design · attack scenarios · threat model' },
-  { num: '',    label: 'Key Results',        desc: 'Range · latency · throughput · hop count' },
-  { num: '',    label: 'Comparison',         desc: 'Peer Reach vs. Meshtastic, Bridgefy, GoTenna' },
+  { num: '01',    label: 'Thesis Overview',    desc: '' },
+  { num: '02',    label: 'Problem Statement',  desc: '' },
+  { num: '03', label: 'Background',         desc: '' },
+  { num: '04',    label: 'System Model',       desc: '' },
+  { num: '05', label: 'System & Demo',      desc: '' },
+  { num: '06',    label: 'Packet Design',      desc: '' },
+  { num: '07', label: 'Security',           desc: '' },
+  { num: '08',    label: 'Key Results',        desc: '' },
+  { num: '09',    label: 'Comparison',         desc: '' },
 ];
 
 function AgendaSlide() {
@@ -125,7 +125,6 @@ function AgendaSlide() {
             <span className="agenda-num">{item.num}</span>
             <div className="agenda-body">
               <span className="agenda-label">{item.label}</span>
-              <span className="agenda-desc">{item.desc}</span>
             </div>
           </li>
         ))}
@@ -1673,12 +1672,7 @@ function CoverSubtitle() {
   const [idx, setIdx] = useState(0);
   const lines = [
     'An Offline Bluetooth Low Energy Communication Framework\nfor Multi-Hop Device-to-Device Networking',
-    'A hybrid BLE-LoRa mesh protocol enabling encrypted,\ninfrastructure-free messaging — no internet required.',
   ];
-  useEffect(() => {
-    const t = setInterval(() => setIdx(i => (i + 1) % 2), 3800);
-    return () => clearInterval(t);
-  }, []);
   return (
     <div className="cover-subtitle-rotate">
       {lines.map((line, i) => (

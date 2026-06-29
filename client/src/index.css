@@ -2534,8 +2534,7 @@ input[type="range"]::-moz-range-thumb {
     0 8px 24px rgba(0,0,0,0.5);
   background: #0A0C10;
   flex-shrink: 0;
-  height: 100% !important;
-  width: 340px !important;
+  transform: scale(.8);
 }
 
 /* transparent drag zone that sits over the mockup's own title bar */
@@ -2595,24 +2594,23 @@ input[type="range"]::-moz-range-thumb {
   margin: 0;
   padding: 0;
   display: flex;
-  flex-direction: column;
   gap: 0;
+  flex-wrap: wrap;
 }
 
 .agenda-item {
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: 18px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--intro-border-soft);
+  padding: 30px 15px;
+  border: 1px solid var(--intro-border-soft);
   opacity: 0;
   transform: translateX(-10px);
   animation: pli-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: calc(var(--ai, 0) * 60ms + 100ms);
-}
-
-.agenda-item:last-child {
-  border-bottom: none;
+  width: 31%;
+  margin: 1%;
 }
 
 .agenda-num {
@@ -2631,6 +2629,7 @@ input[type="range"]::-moz-range-thumb {
   gap: 14px;
   flex: 1;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .agenda-label {
