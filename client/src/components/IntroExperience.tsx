@@ -75,6 +75,8 @@ const INTRO_SECTION_IDS = [
   'hook-security-deep',       // 13
   'hook-security-scenarios',  // 14
   'hook-results-mdr',         // 17 — NEW: MDR vs distance bar chart     
+  'hook-numbers',             // 15
+  'hook-results-cdf',
   'hook-numbers-conc',             // 15
   'hook-related',             // 16
   'hook-transition',          // 17
