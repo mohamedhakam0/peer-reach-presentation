@@ -346,7 +346,6 @@ function RelatedWorkTable({ visible }: { visible: boolean }) {
           </div>
         ))}
       </div>
-      <p className="related-note">Peer Reach uniquely combines phone-native BLE with LoRa bridging — no proprietary hardware, no closed ecosystem.</p>
     </div>
   );
 }
@@ -450,7 +449,7 @@ function ComponentModal({ which, onClose }: { which: ComponentKey; onClose: () =
             <div key={i} className="comp-modal-param-row"
               style={{ '--row-delay': `${i * 40}ms` } as React.CSSProperties}>
               <dt className="comp-modal-key">{p.key}</dt>
-              <dd className="comp-modal-val" style={{ color: spec.color === CYAN ? spec.color : 'rgba(246,248,255,0.88)' }}>{p.value}</dd>
+              <dd className="comp-modal-val">{p.value}</dd>
             </div>
           ))}
         </dl>
@@ -518,10 +517,24 @@ function ComponentsCards({
 }
 
 // ─── Slide 9: System Architecture ────────────────────────────────────────────
+// ── Flooding packet helper: glowing dot that moves along a path then fades ──
+function FPkt({ path, t0, dur, color, r = 6 }: { path: string; t0: number; dur: number; color: string; r?: number }) {
+  const b  = `${t0}s`;
+  const ef = `${t0 + dur + 0.4}s`;
+  return (
+    <circle r={r} fill={color} opacity="0" filter="url(#pkt-glow)">
+      <animate attributeName="opacity" begin={b}  dur="0.15s" fill="freeze" to="1" />
+      <animateMotion         begin={b}  dur={`${dur}s`} fill="freeze" path={path} />
+      <animate attributeName="opacity" begin={ef} dur="0.35s" fill="freeze" to="0" />
+    </circle>
+  );
+}
+
 function ArchitectureDiagram({ active }: { active: boolean }) {
-  const PH = 56;  // phone icon size (matches SimulationCanvas)
-  const EH = 52;  // esp32 icon size
-  const LH = 52;  // lora icon size
+  const PH = 56;
+  const EH = 52;
+  const LH = 52;
+  // 0=PhoneA(sender), 1=PhoneC(L-bottom), 2=PhoneB(L-mid), 3=PhoneD(R-top), 4=PhoneF(recipient), 5=PhoneE(R-mid)
   const phones = [
     { cx: 68,  cy: 100 },
     { cx: 68,  cy: 220 },
@@ -530,42 +543,76 @@ function ArchitectureDiagram({ active }: { active: boolean }) {
     { cx: 754, cy: 220 },
     { cx: 812, cy: 160 },
   ];
+
+  const [animKey,  setAnimKey]  = useState(0);
+  const [playing,  setPlaying]  = useState(false);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // Reset when slide leaves view
+  useEffect(() => { if (!active) setPlaying(false); }, [active]);
+
+  // After animation group mounts/remounts, reset SVG clock to 0 so begin="Xs" works
+  useEffect(() => {
+    if (!playing) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    try { svg.setCurrentTime(0); } catch {}
+  }, [playing, animKey]);
+
+  const handlePlay = () => {
+    setPlaying(false);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      setAnimKey(k => k + 1);
+      setPlaying(true);
+    }));
+  };
+
+  const G = '#22c55e'; // green = forwarded
+  const R = '#ef4444'; // red   = dropped
+
   return (
-    <svg className="arch-svg" viewBox="0 0 880 330" aria-hidden="true">
+    <div style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+    <svg ref={svgRef} className="arch-svg" viewBox="0 0 880 330" aria-hidden="true">
+      <defs>
+        <filter id="pkt-glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       {/* ── Cluster A ── */}
-      {/* BLE rings */}
       {phones.slice(0, 3).map((p, i) => (
         <circle key={i} cx={p.cx} cy={p.cy} r="34" stroke={CYAN} strokeWidth="0.7" fill="none" opacity="0.2" />
       ))}
-      {/* BLE links A */}
       <line x1="96"  y1="108" x2="162" y2="150" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
       <line x1="96"  y1="212" x2="162" y2="170" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
       <line x1="154" y1="160" x2="178" y2="160" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
+
       {/* ESP32-A */}
       <image href="/icons/esp32.webp" x={208 - EH/2} y={160 - EH/2} width={EH} height={EH} />
       <text x="208" y="222" textAnchor="middle" fill={GOLD} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.75">ESP32</text>
       <line x1="234" y1="160" x2="252" y2="160" stroke={GOLD} strokeWidth="1.3" opacity="0.6" />
+
       {/* LoRa-A */}
       <image href="/icons/lora.webp" x={278 - LH/2} y={160 - LH/2} width={LH} height={LH} />
       <text x="278" y="222" textAnchor="middle" fill={PURPLE} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.75">LoRa</text>
 
-      {/* ── LoRa Link ── */}
+      {/* LoRa radio link */}
       <line x1="304" y1="160" x2="576" y2="160" stroke={PURPLE} strokeWidth="1.5" strokeDasharray="8 6" opacity="0.6" />
       <text x="440" y="144" textAnchor="middle" fill={PURPLE} fontSize="9" opacity="0.65" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em">LoRa · 868 MHz · 1,500 m radius</text>
 
       {/* ── Cluster B ── */}
-      {/* LoRa-B */}
       <image href="/icons/lora.webp" x={602 - LH/2} y={160 - LH/2} width={LH} height={LH} />
       <text x="602" y="222" textAnchor="middle" fill={PURPLE} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.75">LoRa</text>
       <line x1="628" y1="160" x2="646" y2="160" stroke={GOLD} strokeWidth="1.3" opacity="0.6" />
-      {/* ESP32-B */}
       <image href="/icons/esp32.webp" x={672 - EH/2} y={160 - EH/2} width={EH} height={EH} />
       <text x="672" y="222" textAnchor="middle" fill={GOLD} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.75">ESP32</text>
-      {/* BLE links B */}
       <line x1="698" y1="150" x2="726" y2="108" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
       <line x1="698" y1="170" x2="726" y2="212" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
       <line x1="698" y1="160" x2="726" y2="160" stroke={CYAN} strokeWidth="1.2" opacity="0.45" strokeDasharray="4 4" />
-      {/* BLE rings B */}
       {phones.slice(3).map((p, i) => (
         <circle key={i} cx={p.cx} cy={p.cy} r="34" stroke={CYAN} strokeWidth="0.7" fill="none" opacity="0.2" />
       ))}
@@ -575,21 +622,71 @@ function ArchitectureDiagram({ active }: { active: boolean }) {
         <image key={i} href="/icons/phone.webp" x={p.cx - PH/2} y={p.cy - PH/2} width={PH} height={PH} />
       ))}
 
-      {/* Labels */}
-      <text x="170" y="298" textAnchor="middle" fill={CYAN} fontSize="10" opacity="0.6" fontFamily="var(--font-mono,monospace)" letterSpacing="0.1em">BLE CLUSTER A</text>
-      <text x="706" y="298" textAnchor="middle" fill={CYAN} fontSize="10" opacity="0.6" fontFamily="var(--font-mono,monospace)" letterSpacing="0.1em">BLE CLUSTER B</text>
+      {/* Role labels */}
+      <text x="68"  y="67"  textAnchor="middle" fill={GREEN}  fontSize="7.5" fontFamily="var(--font-mono,monospace)" opacity="0.8" letterSpacing="0.06em">SENDER</text>
+      <text x="754" y="250" textAnchor="middle" fill={GREEN}  fontSize="7.5" fontFamily="var(--font-mono,monospace)" opacity="0.8" letterSpacing="0.06em">RECIPIENT</text>
+      <text x="170" y="298" textAnchor="middle" fill={CYAN}   fontSize="9.5" fontFamily="var(--font-mono,monospace)" opacity="0.55" letterSpacing="0.1em">BLE CLUSTER A</text>
+      <text x="706" y="298" textAnchor="middle" fill={CYAN}   fontSize="9.5" fontFamily="var(--font-mono,monospace)" opacity="0.55" letterSpacing="0.1em">BLE CLUSTER B</text>
 
-      {/* Animated packet dot */}
-      {active && (
-        <circle r="5" fill={CYAN} opacity="0.9" className="arch-packet">
-          <animateMotion
-            dur="4.5s"
-            repeatCount="indefinite"
-            path="M68,160 L126,160 L178,160 L208,160 L278,160 L440,160 L602,160 L672,160 L726,160 L783,160"
-          />
-        </circle>
+      {/* ── Managed Flooding packets: only shown after Play is clicked ── */}
+      {playing && (
+        <g key={animKey}>
+          {/* ── Phase 1: Phone A → Phone B (message origin) ── */}
+          <FPkt path="M68,100 L126,160"   t0={0}    dur={3}   color={G} r={4} />
+
+          {/* ── Phase 2: B floods — A & C drop, ESP32 forwards ── */}
+          <FPkt path="M126,160 L68,100"   t0={3.3}  dur={2.5} color={R} r={3.5} />
+          <FPkt path="M126,160 L68,220"   t0={3.3}  dur={2.5} color={R} r={3.5} />
+          <FPkt path="M126,160 L208,160"  t0={3.3}  dur={2}   color={G} r={3.5} />
+
+          {/* ── Phase 3: ESP32-A floods — phones drop, LoRa-A forwards ── */}
+          <FPkt path="M208,160 L68,100"   t0={5.6}  dur={2.5} color={R} r={3.5} />
+          <FPkt path="M208,160 L126,160"  t0={5.6}  dur={2}   color={R} r={3.5} />
+          <FPkt path="M208,160 L68,220"   t0={5.6}  dur={2.5} color={R} r={3.5} />
+          <FPkt path="M208,160 L278,160"  t0={5.6}  dur={1.5} color={G} r={3.5} />
+
+          {/* ── Phase 4: LoRa-A — ESP back-direction drops, LoRa-B forwards ── */}
+          <FPkt path="M278,160 L208,160"  t0={7.4}  dur={1.5} color={R} r={3.5} />
+          <FPkt path="M278,160 L602,160"  t0={7.4}  dur={3}   color={G} r={3.5} />
+
+          {/* ── Phase 5: LoRa-B → ESP32-B ── */}
+          <FPkt path="M602,160 L672,160"  t0={10.7} dur={1.5} color={G} r={3.5} />
+
+          {/* ── Phase 6: ESP32-B floods — D & E drop, F is recipient ── */}
+          <FPkt path="M672,160 L754,100"  t0={12.5} dur={2.5} color={R} r={3.5} />
+          <FPkt path="M672,160 L812,160"  t0={12.5} dur={2}   color={R} r={3.5} />
+          <FPkt path="M672,160 L754,220"  t0={12.5} dur={2.5} color={G} r={4} />
+
+          {/* ── Phase 7: ACK travels all the way back ── */}
+          <FPkt path="M754,220 L672,160"  t0={16}   dur={2}   color={G} r={3.5} />
+          <FPkt path="M672,160 L602,160"  t0={18.3} dur={1.5} color={G} r={3.5} />
+          <FPkt path="M602,160 L278,160"  t0={20.1} dur={3}   color={G} r={3.5} />
+          <FPkt path="M278,160 L208,160"  t0={23.4} dur={1.5} color={G} r={3.5} />
+          <FPkt path="M208,160 L68,100"   t0={25.2} dur={2.5} color={G} r={4} />
+        </g>
       )}
     </svg>
+
+    {/* Play/Replay button — always clickable */}
+    <button
+      onClick={handlePlay}
+      style={{
+        marginTop: 6,
+        padding: playing ? '5px 16px' : '6px 20px',
+        background: playing ? 'transparent' : 'rgba(34,197,94,0.15)',
+        border: playing ? '1px solid rgba(34,197,94,0.4)' : '1px solid #22c55e',
+        borderRadius: 20,
+        color: playing ? 'rgba(34,197,94,0.6)' : '#22c55e',
+        fontSize: playing ? 10 : 12,
+        fontFamily: 'var(--font-mono, monospace)',
+        letterSpacing: '0.08em',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+      }}
+    >
+      {playing ? '↺ REPLAY' : '▶ PLAY'}
+    </button>
+    </div>
   );
 }
 
@@ -636,11 +733,11 @@ const FIELD_DETAILS: Record<FieldKey, FieldDetail> = {
   },
   ttl: {
     name: 'ttl', offset: 'B23', size: '1 byte', color: WHITE,
-    desc: '⚡ Mutable-by-relay field — NOT covered by AAD. Time-to-Live hop budget. Set to 5 at the origin device. Each relay decrements TTL by 1 before forwarding. When TTL reaches 0 the packet is silently dropped, preventing infinite routing loops.',
+    desc: 'Changeable by relay — NOT covered by AAD. Time-to-Live hop budget. Set to 5 at the origin device. Each relay decrements TTL by 1 before forwarding. When TTL reaches 0 the packet is silently dropped, preventing infinite routing loops.',
   },
   hopCount: {
     name: 'hopCount', offset: 'B24', size: '1 byte', color: WHITE,
-    desc: '⚡ Mutable-by-relay field — NOT covered by AAD. Hop counter. Starts at 0 at the origin. Incremented by every relay node. Lets the destination measure path length and lets the UI display delivery distance (e.g. "delivered in 3 hops").',
+    desc: 'Changeable by relay — NOT covered by AAD. Hop counter. Starts at 0 at the origin. Incremented by every relay node. Lets the destination measure path length and lets the UI display delivery distance (e.g. "delivered in 3 hops").',
   },
   timestamp: {
     name: 'timestamp', offset: 'B20–B23', size: '4 bytes', color: WHITE,
@@ -657,7 +754,7 @@ const FIELD_DETAILS: Record<FieldKey, FieldDetail> = {
   },
   payloadLen: {
     name: 'payloadLen', offset: 'B25', size: '1 byte', color: WHITE,
-    desc: '⚡ Mutable-by-relay field — NOT covered by AAD. Length of the payload in bytes (0–208). Allows the parser to read exactly the right number of bytes after the 42-byte fixed header without a frame delimiter. Relays update this field when necessary.',
+    desc: 'Changeable by relay — NOT covered by AAD. Length of the payload in bytes (0–208). Allows the parser to read exactly the right number of bytes after the 42-byte fixed header without a frame delimiter. Relays update this field when necessary.',
   },
   authTag: {
     name: 'authTag', offset: 'B26–B41', size: '16 bytes', color: GOLD,
@@ -702,7 +799,7 @@ function FieldDetailPanel({ detail, onClose }: { detail: FieldDetail; onClose: (
               <div key={i} className="pf-detail-entry">
                 <code className="pf-detail-code" style={{ color: GOLD }}>{b.mask}</code>
                 <span>
-                  <strong style={{ color: 'rgba(246,248,255,0.88)' }}>{b.name}</strong>
+                  <strong style={{ color: 'var(--intro-text)' }}>{b.name}</strong>
                   {' '}— {b.desc}
                 </span>
               </div>
@@ -776,8 +873,8 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
 
   const hFill = (id: FieldKey) =>
     isSel(id) ? 'rgba(0,188,212,0.15)'  :
-    isHov(id) ? 'rgba(246,248,255,0.07)' :
-                'rgba(246,248,255,0.025)';
+    isHov(id) ? 'var(--intro-border-soft)' :
+                'var(--intro-surface)';
 
   const toggle = (id: FieldKey) => setSelectedField(p => p === id ? null : id);
 
@@ -819,7 +916,7 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
 
         {/* Header outline */}
         <rect x={MX} y={BY} width={HW} height={BH} rx={R}
-          fill="none" stroke="rgba(246,248,255,0.14)" strokeWidth="1"
+          fill="none" stroke="var(--intro-border)" strokeWidth="1"
           style={{ pointerEvents: 'none' }} />
 
         {/* Dividers + field labels */}
@@ -827,25 +924,24 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
           const fx = fxs[i];
           const cx = fx + f.w / 2;
           const cy = BY + BH / 2;
-          // rotate all fields that are ≤48px wide (senderId, receiverId, timestamp at 48 included)
           const narrow = f.w <= 48;
           const sel = isSel(f.id);
           return (
             <g key={i} className={`packet-field pf-${i}`} style={{ pointerEvents: 'none' }}>
               {i > 0 && (
                 <line x1={fx} y1={BY+7} x2={fx} y2={BB-7}
-                  stroke="rgba(246,248,255,0.1)" strokeWidth="0.8" />
+                  stroke="var(--intro-border-soft)" strokeWidth="0.8" />
               )}
               {narrow ? (
                 <>
                   <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="middle"
-                    fill={sel ? CYAN : 'rgba(246,248,255,0.72)'}
+                    fill={sel ? CYAN : 'var(--intro-text-dim)'}
                     fontSize="10" fontFamily="var(--font-mono,monospace)"
                     transform={`rotate(-90,${cx},${cy - 4})`}>
                     {f.id}
                   </text>
                   <text x={cx} y={BB - 8} textAnchor="middle"
-                    fill={sel ? CYAN : 'rgba(246,248,255,0.35)'}
+                    fill={sel ? CYAN : 'var(--intro-text-faint)'}
                     fontSize="8.5" fontFamily="var(--font-mono,monospace)">
                     {f.bytes}
                   </text>
@@ -853,12 +949,12 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
               ) : (
                 <>
                   <text x={cx} y={cy-7} textAnchor="middle"
-                    fill={sel ? CYAN : 'rgba(246,248,255,0.8)'}
+                    fill={sel ? CYAN : 'var(--intro-text)'}
                     fontSize="11" fontFamily="var(--font-mono,monospace)">
                     {f.id}
                   </text>
                   <text x={cx} y={cy+11} textAnchor="middle"
-                    fill="rgba(246,248,255,0.35)" fontSize="9.5"
+                    fill="var(--intro-text-faint)" fontSize="9.5"
                     fontFamily="var(--font-mono,monospace)">
                     {f.bytes}
                   </text>
@@ -935,49 +1031,51 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
           </text>
         </g>
 
-        {/* ── Above: header vs. authenticated section labels ── */}
+        {/* ── Above: header (42B) + payload labels ── */}
         <g style={{ pointerEvents: 'none' }}>
-          <line x1={MX}    y1={BY-22} x2={MX+HW} y2={BY-22} stroke="rgba(246,248,255,0.15)" strokeWidth="0.8" />
-          <line x1={MX}    y1={BY-22} x2={MX}    y2={BY-12} stroke="rgba(246,248,255,0.15)" strokeWidth="0.8" />
-          <line x1={MX+HW} y1={BY-22} x2={MX+HW} y2={BY-12} stroke="rgba(246,248,255,0.15)" strokeWidth="0.8" />
-          <text x={MX+HW/2} y={BY-26} textAnchor="middle"
-            fill="rgba(246,248,255,0.28)" fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em">
-            HEADER · 26 B
+          {/* HEADER · 42 B bracket (fields + authTag) */}
+          <line x1={MX}      y1={BY-22} x2={AX+AW} y2={BY-22} stroke="var(--intro-border)" strokeWidth="0.8" />
+          <line x1={MX}      y1={BY-22} x2={MX}    y2={BY-12} stroke="var(--intro-border)" strokeWidth="0.8" />
+          <line x1={AX+AW}   y1={BY-22} x2={AX+AW} y2={BY-12} stroke="var(--intro-border)" strokeWidth="0.8" />
+          <text x={(MX + AX + AW) / 2} y={BY-26} textAnchor="middle"
+            fill="var(--intro-text-faint)" fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em">
+            HEADER · 42 B
           </text>
-          <line x1={AX}    y1={BY-22} x2={PX+PW} y2={BY-22} stroke={CYAN} strokeWidth="0.8" opacity="0.35" />
-          <line x1={AX}    y1={BY-22} x2={AX}    y2={BY-12} stroke={CYAN} strokeWidth="0.8" opacity="0.35" />
+          {/* PAYLOAD bracket */}
+          <line x1={PX}    y1={BY-22} x2={PX+PW} y2={BY-22} stroke={CYAN} strokeWidth="0.8" opacity="0.35" />
+          <line x1={PX}    y1={BY-22} x2={PX}    y2={BY-12} stroke={CYAN} strokeWidth="0.8" opacity="0.35" />
           <line x1={PX+PW} y1={BY-22} x2={PX+PW} y2={BY-12} stroke={CYAN} strokeWidth="0.8" opacity="0.35" />
-          <text x={AX+(AW+GAP+PW)/2} y={BY-26} textAnchor="middle"
+          <text x={PX + PW/2} y={BY-26} textAnchor="middle"
             fill={CYAN} fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em" opacity="0.55">
-            AES-128-GCM AUTHENTICATED · RELAY CANNOT READ
+            AES-128-GCM CIPHERTEXT
           </text>
         </g>
 
         {/* ── Below bar: AAD + Mutable-by-relay brackets ── */}
         <g style={{ pointerEvents: 'none' }}>
           {/* AAD bracket */}
-          <line x1={MX}        y1={BB+8}  x2={MX}        y2={BB+22} stroke="rgba(130,180,255,0.4)" strokeWidth="0.9" />
-          <line x1={MX}        y1={BB+22} x2={AAD_END_X} y2={BB+22} stroke="rgba(130,180,255,0.4)" strokeWidth="0.9" />
-          <line x1={AAD_END_X} y1={BB+8}  x2={AAD_END_X} y2={BB+22} stroke="rgba(130,180,255,0.4)" strokeWidth="0.9" />
+          <line x1={MX}        y1={BB+8}  x2={MX}        y2={BB+22} stroke={CYAN} strokeWidth="0.9" opacity="0.4" />
+          <line x1={MX}        y1={BB+22} x2={AAD_END_X} y2={BB+22} stroke={CYAN} strokeWidth="0.9" opacity="0.4" />
+          <line x1={AAD_END_X} y1={BB+8}  x2={AAD_END_X} y2={BB+22} stroke={CYAN} strokeWidth="0.9" opacity="0.4" />
           <text x={(MX + AAD_END_X) / 2} y={BB+36} textAnchor="middle"
-            fill="rgba(130,180,255,0.7)" fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.06em">
+            fill={CYAN} fontSize="8.5" fontFamily="var(--font-mono,monospace)" letterSpacing="0.06em" opacity="0.65">
             AAD (Authenticated Data) · 23 B
           </text>
 
-          {/* Mutable-by-relay bracket */}
-          <line x1={AAD_END_X} y1={BB+8}  x2={AAD_END_X} y2={BB+22} stroke="rgba(246,248,255,0.3)" strokeWidth="0.9" />
-          <line x1={AAD_END_X} y1={BB+22} x2={MUT_END_X} y2={BB+22} stroke="rgba(246,248,255,0.3)" strokeWidth="0.9" />
-          <line x1={MUT_END_X} y1={BB+8}  x2={MUT_END_X} y2={BB+22} stroke="rgba(246,248,255,0.3)" strokeWidth="0.9" />
+          {/* Changeable-by-relay bracket */}
+          <line x1={AAD_END_X} y1={BB+8}  x2={AAD_END_X} y2={BB+22} stroke="var(--intro-border)" strokeWidth="0.9" />
+          <line x1={AAD_END_X} y1={BB+22} x2={MUT_END_X} y2={BB+22} stroke="var(--intro-border)" strokeWidth="0.9" />
+          <line x1={MUT_END_X} y1={BB+8}  x2={MUT_END_X} y2={BB+22} stroke="var(--intro-border)" strokeWidth="0.9" />
           <text x={(AAD_END_X + MUT_END_X) / 2} y={BB+36} textAnchor="middle"
-            fill="rgba(246,248,255,0.5)" fontSize="8" fontFamily="var(--font-mono,monospace)" letterSpacing="0.05em">
-            Mutable-by-relay · 3 B
+            fill="var(--intro-text-muted)" fontSize="8" fontFamily="var(--font-mono,monospace)" letterSpacing="0.05em">
+            Changeable by relay · 3 B
           </text>
 
-          {/* authTag bracket */}
+          {/* authTag bracket — label offset lower to avoid text overlap with "Changeable by relay" */}
           <line x1={AX}    y1={BB+8}  x2={AX}    y2={BB+22} stroke={GOLD} strokeWidth="0.9" opacity="0.45" />
           <line x1={AX}    y1={BB+22} x2={AX+AW} y2={BB+22} stroke={GOLD} strokeWidth="0.9" opacity="0.45" />
           <line x1={AX+AW} y1={BB+8}  x2={AX+AW} y2={BB+22} stroke={GOLD} strokeWidth="0.9" opacity="0.45" />
-          <text x={AX+AW/2} y={BB+36} textAnchor="middle"
+          <text x={AX+AW/2} y={BB+52} textAnchor="middle"
             fill={GOLD} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.6" letterSpacing="0.05em">
             authTag · 16 B · AES-GCM
           </text>
@@ -986,25 +1084,25 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
         {/* ── Byte offset ticks ── */}
         {ticks.map((t, i) => (
           <g key={i} style={{ pointerEvents: 'none' }}>
-            <line x1={t.bx} y1={BB+50} x2={t.bx} y2={BB+60} stroke="rgba(246,248,255,0.1)" strokeWidth="0.7" />
-            <text x={t.bx} y={BB+72} textAnchor="middle"
-              fill="rgba(246,248,255,0.22)" fontSize="8" fontFamily="var(--font-mono,monospace)">
+            <line x1={t.bx} y1={BB+60} x2={t.bx} y2={BB+70} stroke="var(--intro-border-soft)" strokeWidth="0.7" />
+            <text x={t.bx} y={BB+82} textAnchor="middle"
+              fill="var(--intro-text-dimmer)" fontSize="8" fontFamily="var(--font-mono,monospace)">
               {t.label}
             </text>
           </g>
         ))}
 
-        {/* Total cap + hint */}
-        <text x={VW/2} y={BB+92} textAnchor="middle"
-          fill="rgba(246,248,255,0.15)" fontSize="9"
-          fontFamily="var(--font-mono,monospace)" letterSpacing="0.08em"
+        {/* Note: 250 B total packet design */}
+        <text x={VW/2} y={BB+102} textAnchor="middle"
+          fill="var(--intro-text-faint)" fontSize="10"
+          fontFamily="var(--font-mono,monospace)" letterSpacing="0.06em"
           style={{ pointerEvents: 'none' }}>
-          42 B FIXED HEADER + 0–208 B PAYLOAD · 250 B TOTAL CAP · PacketSerializer.kt
+          Our packet design is 250 bytes total
         </text>
 
         {!selectedField && (
-          <text x={VW/2} y={BB+112} textAnchor="middle"
-            fill="rgba(246,248,255,0.2)" fontSize="9"
+          <text x={VW/2} y={BB+118} textAnchor="middle"
+            fill="var(--intro-text-dimmer)" fontSize="9"
             fontFamily="var(--font-mono,monospace)" letterSpacing="0.12em"
             className="pf-click-hint-svg"
             style={{ pointerEvents: 'none' }}>
@@ -1050,9 +1148,6 @@ function NumbersSlide({ visibleCount }: { visibleCount: number }) {
           </div>
         ))}
       </div>
-      <p className={`numbers-footer ${visibleCount >= 6 ? 'is-visible' : ''}`}>
-        Real measurements. Real hardware. Real results.
-      </p>
     </div>
   );
 }
@@ -1100,20 +1195,20 @@ function EncryptionFlowAnimation({ replayKey }: { replayKey: number }) {
   return (
     <div className="crypto-flow" key={replayKey}>
       <svg className="crypto-scene" viewBox="0 0 980 340" aria-hidden="true">
-        <line x1="162" y1="150" x2="260" y2="150" stroke="rgba(246,248,255,0.35)" strokeWidth="1.2" />
-        <line x1="320" y1="150" x2="420" y2="150" stroke="rgba(246,248,255,0.35)" strokeWidth="1.2" />
-        <line x1="480" y1="150" x2="580" y2="150" stroke="rgba(246,248,255,0.35)" strokeWidth="1.2" />
-        <line x1="640" y1="150" x2="804" y2="150" stroke="rgba(246,248,255,0.35)" strokeWidth="1.2" />
+        <line x1="162" y1="150" x2="260" y2="150" stroke="var(--intro-text-faint)" strokeWidth="1.2" />
+        <line x1="320" y1="150" x2="420" y2="150" stroke="var(--intro-text-faint)" strokeWidth="1.2" />
+        <line x1="480" y1="150" x2="580" y2="150" stroke="var(--intro-text-faint)" strokeWidth="1.2" />
+        <line x1="640" y1="150" x2="804" y2="150" stroke="var(--intro-text-faint)" strokeWidth="1.2" />
         <g transform="translate(70 72)"><AndroidPhoneIcon compact /></g>
         <g transform="translate(780 72)"><AndroidPhoneIcon compact /></g>
         {[292, 452, 612].map((x, idx) => (
           <g key={x}>
-            <rect x={x} y={98} width="44" height="84" rx="10" fill="#111620" stroke="rgba(246,248,255,0.62)" strokeWidth="1.6" />
-            <circle cx={x + 22} cy={170} r="3" fill="rgba(246,248,255,0.64)" />
+            <rect x={x} y={98} width="44" height="84" rx="10" fill="var(--intro-surface)" stroke="var(--intro-border)" strokeWidth="1.6" />
+            <circle cx={x + 22} cy={170} r="3" fill="var(--intro-text-dim)" />
             <g className={`crypto-no-read r${idx + 1}`}>
-              <circle cx={x + 22} cy={76} r="13" fill="rgba(16,20,29,0.96)" stroke="rgba(246,248,255,0.38)" strokeWidth="1" />
-              <path d={`M${x + 13} 76h18`} stroke="rgba(246,248,255,0.64)" strokeWidth="1.2" />
-              <path d={`M${x + 15} 70c2-2 4-3 7-3s5 1 7 3`} stroke="rgba(246,248,255,0.58)" strokeWidth="1" fill="none" />
+              <circle cx={x + 22} cy={76} r="13" fill="var(--intro-bg)" stroke="var(--intro-border)" strokeWidth="1" />
+              <path d={`M${x + 13} 76h18`} stroke="var(--intro-text-dim)" strokeWidth="1.2" />
+              <path d={`M${x + 15} 70c2-2 4-3 7-3s5 1 7 3`} stroke="var(--intro-text-muted)" strokeWidth="1" fill="none" />
             </g>
           </g>
         ))}
@@ -1137,17 +1232,23 @@ function EncryptionFlowAnimation({ replayKey }: { replayKey: number }) {
         </g>
       </svg>
       <div className="crypto-lines">
-        <p className="line1">Keys exchanged out-of-band via QR code — never transmitted over the mesh</p>
-        <p className="line2">Curve25519 ECDH · HKDF-SHA256 · AES-128-GCM</p>
-        <p className="line3">Zero plaintext exposure at intermediate relay nodes</p>
+        <p className="line1">QR key exchange — keys never cross the mesh</p>
+        <p className="line2">Curve25519 ECDH → HKDF-SHA256 → AES-128-GCM</p>
+        <p className="line3">Relay nodes see only ciphertext — zero plaintext at any hop</p>
       </div>
-      <p className="crypto-footer">Even if a relay is compromised, your message remains private.</p>
     </div>
   );
 }
 
 // ─── Slide 13: Security Deep Dive ────────────────────────────────────────────
 function SecurityDeepDiveAnimation({ replayKey }: { replayKey: number }) {
+  const [cycleKey, setCycleKey] = useState(0);
+  useEffect(() => {
+    setCycleKey(0);
+    const id = setInterval(() => setCycleKey(k => k + 1), 8000);
+    return () => clearInterval(id);
+  }, [replayKey]);
+
   return (
     <div className="sec-deep-wrap" key={replayKey}>
 
@@ -1181,21 +1282,36 @@ function SecurityDeepDiveAnimation({ replayKey }: { replayKey: number }) {
           <text x="565" y="99" textAnchor="middle" fill={GREEN} fontSize="9" opacity="0.6" fontFamily="var(--font-mono,monospace)">GCM</text>
 
           {/* Arrows */}
-          <line x1="96" y1="98" x2="200" y2="88" stroke="rgba(246,248,255,0.2)" strokeWidth="1" />
-          <line x1="310" y1="88" x2="355" y2="88" stroke="rgba(246,248,255,0.2)" strokeWidth="1" />
-          <line x1="465" y1="88" x2="510" y2="88" stroke="rgba(246,248,255,0.2)" strokeWidth="1" />
-          <line x1="620" y1="88" x2="724" y2="98" stroke="rgba(246,248,255,0.2)" strokeWidth="1" />
+          <line x1="96" y1="98" x2="200" y2="88" stroke="var(--intro-border)" strokeWidth="1" />
+          <line x1="310" y1="88" x2="355" y2="88" stroke="var(--intro-border)" strokeWidth="1" />
+          <line x1="465" y1="88" x2="510" y2="88" stroke="var(--intro-border)" strokeWidth="1" />
+          <line x1="620" y1="88" x2="724" y2="98" stroke="var(--intro-border)" strokeWidth="1" />
 
-          {/* Traveling key dot */}
-          <circle r="5" fill={GOLD} className="sdp-keydot">
-            <animateMotion dur="3.2s" repeatCount="indefinite"
-              path="M96,98 L200,88 L310,88 L355,88 L465,88 L510,88 L620,88 L724,98" />
-          </circle>
+          {/* Message + ACK on a shared 8s cycle key so they never overlap */}
+          <g key={cycleKey}>
+            {/* Message → forward (gold): plays 0→3.2s then fades */}
+            <circle r="5" fill={GOLD} className="sdp-keydot" opacity="0">
+              <animate attributeName="opacity" begin="0s"   dur="0.1s"  fill="freeze" to="0.9" />
+              <animateMotion begin="0s" dur="3.2s" fill="freeze"
+                path="M96,98 L200,88 L310,88 L355,88 L465,88 L510,88 L620,88 L724,98" />
+              <animate attributeName="opacity" begin="3.3s" dur="0.3s"  fill="freeze" to="0" />
+            </circle>
+
+            {/* ACK ← backward (green): starts only after message arrives at 3.4s */}
+            <circle r="5" fill={GREEN} opacity="0" style={{ filter: 'drop-shadow(0 0 5px #22c55e)' }}>
+              <animate attributeName="opacity" begin="3.4s" dur="0.15s" fill="freeze" to="0.9" />
+              <animateMotion begin="3.4s" dur="2.8s" fill="freeze"
+                path="M724,98 L620,88 L510,88 L465,88 L355,88 L310,88 L200,88 L96,98" />
+              <animate attributeName="opacity" begin="6.4s" dur="0.3s"  fill="freeze" to="0" />
+            </circle>
+          </g>
 
           {/* QR label */}
           <text x="68"  y="168" textAnchor="middle" fill={CYAN} fontSize="9" opacity="0.55" fontFamily="var(--font-mono,monospace)">PHONE A</text>
           <text x="752" y="168" textAnchor="middle" fill={CYAN} fontSize="9" opacity="0.55" fontFamily="var(--font-mono,monospace)">PHONE B</text>
-          <text x="410" y="155" textAnchor="middle" fill="rgba(246,248,255,0.3)" fontSize="9" fontFamily="var(--font-mono,monospace)">QR SCAN OUT-OF-BAND · KEY NEVER CROSSES THE MESH</text>
+          <text x="360" y="155" textAnchor="middle" fill="var(--intro-text-faint)" fontSize="8" fontFamily="var(--font-mono,monospace)">— MESSAGE</text>
+          <text x="510" y="155" textAnchor="middle" fill={GREEN} fontSize="8" opacity="0.6" fontFamily="var(--font-mono,monospace)">ACK ←</text>
+          <text x="410" y="170" textAnchor="middle" fill="var(--intro-text-dimmer)" fontSize="8" fontFamily="var(--font-mono,monospace)">QR SCAN OUT-OF-BAND · KEY NEVER CROSSES THE MESH</text>
         </svg>
       </div>
 
@@ -1238,6 +1354,88 @@ const DEMO_STEPS = [
 ];
 
 function LiveDemoSlide({ isActive }: { isActive: boolean }) {
+  const [fixedPos, setFixedPos] = useState<{ left: number; top: number } | null>(null);
+  const [size, setSize] = useState({ width: 390, height: 720 });
+  const [busy, setBusy] = useState(false);
+  const op = useRef<
+    | { mode: 'drag';   sx: number; sy: number; ol: number; ot: number }
+    | { mode: 'resize'; sx: number; sy: number; ow: number; oh: number }
+    | null
+  >(null);
+  const floatRef  = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Inject CSS into iframe on load: hide dark background, phone-window fills viewport
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const inject = () => {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc || doc.getElementById('_embed')) return;
+        const s = doc.createElement('style');
+        s.id = '_embed';
+        s.textContent = `
+          html, body { background: transparent !important; overflow: hidden !important; }
+          body::before { display: none !important; }
+          .phone-window {
+            position: fixed !important;
+            left: 0 !important; top: 0 !important;
+            width: 100% !important; height: 100% !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            transition: none !important;
+          }
+        `;
+        doc.head.appendChild(s);
+      } catch {}
+    };
+    iframe.addEventListener('load', inject);
+    return () => iframe.removeEventListener('load', inject);
+  }, []);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const a = op.current;
+      if (!a) return;
+      if (a.mode === 'drag') {
+        setFixedPos({ left: a.ol + e.clientX - a.sx, top: a.ot + e.clientY - a.sy });
+      } else {
+        setSize({ width: Math.max(300, a.ow + e.clientX - a.sx), height: Math.max(400, a.oh + e.clientY - a.sy) });
+      }
+    };
+    const onUp = () => { op.current = null; setBusy(false); };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, []);
+
+  useEffect(() => {
+    if (!isActive) { setFixedPos(null); setBusy(false); op.current = null; }
+  }, [isActive]);
+
+  const onDragDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = floatRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const ol = fixedPos?.left ?? rect.left;
+    const ot = fixedPos?.top  ?? rect.top;
+    if (!fixedPos) setFixedPos({ left: rect.left, top: rect.top });
+    op.current = { mode: 'drag', sx: e.clientX, sy: e.clientY, ol, ot };
+    setBusy(true);
+  };
+
+  const onResizeDown = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    op.current = { mode: 'resize', sx: e.clientX, sy: e.clientY, ow: size.width, oh: size.height };
+    setBusy(true);
+  };
+
+  const floatStyle: React.CSSProperties = fixedPos
+    ? { position: 'fixed', left: fixedPos.left, top: fixedPos.top, zIndex: 300, width: size.width, height: size.height }
+    : { width: size.width, height: size.height };
+
   return (
     <div className="demo-slide">
       <div className="demo-steps-panel">
@@ -1257,12 +1455,22 @@ function LiveDemoSlide({ isActive }: { isActive: boolean }) {
       </div>
 
       <div className="demo-iframe-wrap">
-        <iframe
-          src="/peerreach-mockup.html"
-          className="demo-win-iframe"
-          title="Peer Reach App"
-          sandbox="allow-scripts allow-same-origin"
-        />
+        <div ref={floatRef} className="demo-app-float" style={floatStyle}>
+          {/* Transparent drag strip over the mockup's own title bar (top 34px) */}
+          <div
+            className="demo-drag-strip"
+            onMouseDown={onDragDown}
+            style={{ cursor: busy ? 'grabbing' : 'grab' }}
+          />
+          <iframe
+            ref={iframeRef}
+            src="/peerreach-mockup.html"
+            title="Peer Reach App"
+            sandbox="allow-scripts allow-same-origin"
+            style={{ width: '100%', height: '100%', border: 'none', display: 'block', pointerEvents: busy ? 'none' : 'auto' }}
+          />
+          <div className="demo-win-resizer" onMouseDown={onResizeDown} />
+        </div>
       </div>
     </div>
   );

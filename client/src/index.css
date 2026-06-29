@@ -2440,14 +2440,14 @@ input[type="range"]::-moz-range-thumb {
   line-height: 1.55;
 }
 
-/* RIGHT: iframe panel */
+/* RIGHT: centers the floating app window */
 .demo-iframe-wrap {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 24px 24px 0;
-  min-width: 0;
+  overflow: visible;
 }
 
 /* RIGHT: floating draggable/resizable window (kept for reference) */
@@ -2523,14 +2523,28 @@ input[type="range"]::-moz-range-thumb {
   flex-shrink: 0;
 }
 
-/* iframe fills the wrap */
-.demo-win-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  background: transparent;
-  display: block;
-  border-radius: 12px;
+/* floating app window — phone chrome from CSS, content from iframe */
+.demo-app-float {
+  position: relative;
+  border-radius: 44px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.10),
+    0 32px 80px rgba(0,0,0,0.75),
+    0 8px 24px rgba(0,0,0,0.5);
+  background: #0A0C10;
+  flex-shrink: 0;
+}
+
+/* transparent drag zone that sits over the mockup's own title bar */
+.demo-drag-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 34px;
+  z-index: 10;
+  user-select: none;
 }
 
 /* bottom-right resize grip */
