@@ -74,13 +74,10 @@ const INTRO_SECTION_IDS = [
   'hook-security-framework',            // 13
   'hook-security-deep',       // 13
   'hook-security-scenarios',  // 14
-  'hook-numbers',             // 16
-  'hook-results-mdr',         // 17 — NEW: MDR vs distance bar chart
-  'hook-results-range',       // 18 — NEW: BLE vs LoRa range circles
-  'hook-results-lora',        // 19 — NEW: LoRa field tests
-  'hook-results-cdf',         // 20 — NEW: ACK RTT CDF
-  'hook-related',             // 21
-  'hook-transition',          // 22
+  'hook-results-mdr',         // 17 — NEW: MDR vs distance bar chart     
+  'hook-numbers-conc',             // 15
+  'hook-related',             // 16
+  'hook-transition',          // 17
 ] as const;
 
 const TOTAL_SLIDES = INTRO_SECTION_IDS.length;
@@ -103,6 +100,207 @@ function SlideNumber({ current }: { current: number }) {
       pointerEvents: 'none',
     }}>
       {n}<span style={{ opacity: 0.4, margin: '0 4px' }}>/</span>{total}
+    </div>
+  );
+}
+
+// ─── Result Slide A: MDR vs Distance bar chart ───────────────────────────────
+function MDRChart({ active }: { active: boolean }) {
+  const bars = [
+    { label: '1 cm',      mdr: 100, ack: 100 },
+    { label: '30 cm (W)', mdr: 100, ack: 80,  wall: true },
+    { label: '1 m',       mdr: 60,  ack: 60  },
+    { label: '6 m (W)',   mdr: 100, ack: 18,  wall: true },
+    { label: '10 m',      mdr: 92,  ack: 53  },
+    { label: '15 m',      mdr: 100, ack: 0,   ackNA: true },
+    { label: '20 m',      mdr: 100, ack: 40  },
+    { label: '30 m',      mdr: 87,  ack: 17  },
+  ];
+  const W = 820, H = 320, PL = 54, PR = 20, PT = 24, PB = 56;
+  const chartW = W - PL - PR;
+  const chartH = H - PT - PB;
+  const groupW = chartW / bars.length;
+  const bw = groupW * 0.28;
+  const yTicks = [0, 20, 40, 60, 80, 100];
+
+  return (
+    <div className={`res-chart-wrap ${active ? 'is-active' : ''}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', transform: 'scale(1.4)', marginTop: '45px' }}>
+        {/* Y-axis grid + labels */}
+        {yTicks.map(v => {
+          const y = PT + chartH - (v / 100) * chartH;
+          return (
+            <g key={v}>
+              <line x1={PL} y1={y} x2={W - PR} y2={y}
+                stroke="var(--intro-border-soft)" strokeWidth="0.6" strokeDasharray={v === 0 ? '0' : '3 3'} />
+              <text x={PL - 6} y={y + 4} textAnchor="end"
+                fill="var(--intro-text-faint)" fontSize="9" fontFamily="var(--font-mono,monospace)">{v}</text>
+            </g>
+          );
+        })}
+        {/* Y axis label */}
+        <text x={12} y={PT + chartH / 2} textAnchor="middle"
+          fill="var(--intro-text-muted)" fontSize="10" fontFamily="var(--font-mono,monospace)"
+          transform={`rotate(-90, 12, ${PT + chartH / 2})`}>MDR (%)</text>
+
+        {/* Bars */}
+        {bars.map((b, i) => {
+          const gx = PL + i * groupW;
+          const cx = gx + groupW / 2;
+          const mdrH = (b.mdr / 100) * chartH;
+          const ackH = (b.ack / 100) * chartH;
+          const delay = active ? `${i * 80}ms` : '0ms';
+          return (
+            <g key={i}>
+              {/* Packet MDR bar (cyan/blue) */}
+              <rect
+                x={cx - bw - 2} y={PT + chartH - mdrH} width={bw} height={mdrH}
+                fill={CYAN} opacity="0.75" rx="2"
+                style={{ transition: `height 0.5s ease ${delay}, y 0.5s ease ${delay}` }}
+              />
+              {/* ACK-MDR bar (gold) */}
+              {!b.ackNA ? (
+                <rect
+                  x={cx + 2} y={PT + chartH - ackH} width={bw} height={ackH}
+                  fill={GOLD} opacity="0.75" rx="2"
+                  style={{ transition: `height 0.5s ease ${delay}, y 0.5s ease ${delay}` }}
+                />
+              ) : (
+                /* hatched bar for N/A */
+                <rect x={cx + 2} y={PT + chartH - 8} width={bw} height={8}
+                  fill="none" stroke={GOLD} strokeWidth="1" strokeDasharray="3 2" opacity="0.5" rx="1" />
+              )}
+              {/* X label */}
+              <text x={cx} y={PT + chartH + 14} textAnchor="middle"
+                fill={b.wall ? '#f87171' : 'var(--intro-text-muted)'} fontSize="8.5"
+                fontFamily="var(--font-mono,monospace)">{b.label}</text>
+              {b.wall && (
+                <text x={cx} y={PT + chartH + 25} textAnchor="middle"
+                  fill="#f87171" fontSize="7" fontFamily="var(--font-mono,monospace)">Wall</text>
+              )}
+            </g>
+          );
+        })}
+
+        {/* Legend */}
+        <rect x={PL + 10} y={PT + 4} width={10} height={10} fill={CYAN} opacity="0.75" rx="2" />
+        <text x={PL + 24} y={PT + 13} fill="var(--intro-text-dim)" fontSize="9" fontFamily="var(--font-mono,monospace)">Packet MDR</text>
+        <rect x={PL + 100} y={PT + 4} width={10} height={10} fill={GOLD} opacity="0.75" rx="2" />
+        <text x={PL + 114} y={PT + 13} fill="var(--intro-text-dim)" fontSize="9" fontFamily="var(--font-mono,monospace)">ACK-MDR (N/A for 15 m manual)</text>
+
+        {/* X axis */}
+        <line x1={PL} y1={PT + chartH} x2={W - PR} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
+        <line x1={PL} y1={PT} x2={PL} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
+      </svg>
+
+      {/* Caption */}
+      <p style={{ textAlign: 'center', fontSize: 15, color: 'var(--intro-text-muted)', marginTop: 35, fontFamily: 'var(--font-mono,monospace)' }}>
+        Packet MDR ≥ 86.7% at all tested distances · ACK-MDR degrades with distance &amp; wall penetration
+      </p>
+    </div>
+  );
+}
+
+// ─── Result Slide D: ACK RTT CDF ─────────────────────────────────────────────
+function ACKCDFChart({ active }: { active: boolean }) {
+  const W = 820, H = 320, PL = 58, PR = 20, PT = 18, PB = 58;
+  const chartW = W - PL - PR;
+  const chartH = H - PT - PB;
+  const maxX = 4500;
+
+  const toX = (ms: number) => PL + (ms / maxX) * chartW;
+  const toY = (prob: number) => PT + chartH - prob * chartH;
+
+  const pathD = (pts: [number, number][]) =>
+    pts.map(([ms, p], i) => `${i === 0 ? 'M' : 'L'}${toX(ms).toFixed(1)},${toY(p).toFixed(1)}`).join(' ');
+
+  // Aggregate bold line
+  const agg: [number, number][] = [
+    [0,0],[150,0.01],[300,0.05],[450,0.14],[550,0.24],[650,0.37],
+    [750,0.47],[849,0.58],[950,0.63],[1100,0.68],[1300,0.73],
+    [1500,0.78],[1700,0.82],[1900,0.85],[2100,0.87],[2300,0.89],
+    [2480,0.90],[2700,0.92],[3000,0.94],[3500,0.97],[4000,0.985],[4500,1.0],
+  ];
+
+  // Per-session lighter lines (approximated from Figure 8.2)
+  const sessions: { pts: [number, number][]; col: string; op: number }[] = [
+    { pts:[[0,0],[200,0.05],[400,0.22],[600,0.5],[800,0.68],[1000,0.82],[1300,0.93],[1800,0.99],[2200,1.0]], col:'#93c5fd', op:0.5 },
+    { pts:[[0,0],[300,0.04],[600,0.28],[900,0.54],[1200,0.72],[1600,0.86],[2200,0.95],[3000,0.99],[3500,1.0]], col:'#94a3b8', op:0.4 },
+    { pts:[[0,0],[400,0.03],[700,0.14],[1000,0.34],[1400,0.57],[1800,0.72],[2200,0.82],[2800,0.9],[3500,0.97],[4500,1.0]], col:'#94a3b8', op:0.35 },
+    { pts:[[0,0],[600,0.04],[1000,0.1],[1500,0.27],[2000,0.51],[2500,0.71],[3000,0.85],[3800,0.95],[4500,1.0]], col:'#f59e0b', op:0.55 },
+    { pts:[[0,0],[500,0.14],[800,0.44],[1100,0.67],[1400,0.81],[1800,0.91],[2500,0.97],[3200,1.0]], col:'#93c5fd', op:0.35 },
+  ];
+
+  const xTicks = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500];
+  const yTicks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+
+  return (
+    <div className={`res-chart-wrap ${active ? 'is-active' : ''}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', transform: 'scale(1.4)', marginTop: '45px' }}>
+        {/* Y grid + labels */}
+        {yTicks.map(v => (
+          <g key={v}>
+            <line x1={PL} y1={toY(v)} x2={W - PR} y2={toY(v)}
+              stroke="var(--intro-border-soft)" strokeWidth={v === 0 ? 1 : 0.6} strokeDasharray={v === 0 ? '0' : '3 3'} />
+            <text x={PL - 6} y={toY(v) + 4} textAnchor="end"
+              fill="var(--intro-text-faint)" fontSize="9" fontFamily="var(--font-mono,monospace)">{v.toFixed(1)}</text>
+          </g>
+        ))}
+        {/* X grid + labels */}
+        {xTicks.map(v => (
+          <g key={v}>
+            {v > 0 && <line x1={toX(v)} y1={PT} x2={toX(v)} y2={PT + chartH}
+              stroke="var(--intro-border-soft)" strokeWidth="0.6" strokeDasharray="3 3" />}
+            <text x={toX(v)} y={PT + chartH + 14} textAnchor="middle"
+              fill="var(--intro-text-faint)" fontSize="9" fontFamily="var(--font-mono,monospace)">{v}</text>
+          </g>
+        ))}
+        {/* Axes */}
+        <line x1={PL} y1={PT} x2={PL} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
+        <line x1={PL} y1={PT + chartH} x2={W - PR} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
+
+        {/* Axis labels */}
+        <text x={12} y={PT + chartH / 2} textAnchor="middle"
+          fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)"
+          transform={`rotate(-90,12,${PT + chartH / 2})`}>Cumulative probability</text>
+        <text x={PL + chartW / 2} y={H - 4} textAnchor="middle"
+          fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)">ACK Round-Trip Time (ms)</text>
+
+        {/* Per-session lines */}
+        {sessions.map((s, i) => (
+          <path key={i} d={pathD(s.pts)} fill="none" stroke={s.col} strokeWidth="1.2" opacity={s.op} />
+        ))}
+
+        {/* P50 dashed reference */}
+        <line x1={PL} y1={toY(0.58)} x2={toX(849)} y2={toY(0.58)}
+          stroke="var(--intro-text-faint)" strokeWidth="0.8" strokeDasharray="4 3" />
+        <line x1={toX(849)} y1={toY(0.58)} x2={toX(849)} y2={PT + chartH}
+          stroke="var(--intro-text-faint)" strokeWidth="0.8" strokeDasharray="4 3" />
+        <text x={toX(849) + 4} y={toY(0.58) - 5}
+          fill="var(--intro-text-muted)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">P50 = 849 ms</text>
+
+        {/* P90 dashed reference */}
+        <line x1={PL} y1={toY(0.90)} x2={toX(2480)} y2={toY(0.90)}
+          stroke="#f59e0b" strokeWidth="0.8" strokeDasharray="4 3" opacity="0.7" />
+        <line x1={toX(2480)} y1={toY(0.90)} x2={toX(2480)} y2={PT + chartH}
+          stroke="#f59e0b" strokeWidth="0.8" strokeDasharray="4 3" opacity="0.7" />
+        <text x={toX(2480) + 4} y={toY(0.90) - 5}
+          fill="#f59e0b" fontSize="8.5" fontFamily="var(--font-mono,monospace)">P90 = 2480 ms</text>
+
+        {/* Aggregate bold line */}
+        <path d={pathD(agg)} fill="none" stroke="#1e40af" strokeWidth="2.8" opacity="0.9" />
+        <path d={pathD(agg)} fill="none" stroke="#60a5fa" strokeWidth="1.6" opacity="0.7" />
+
+        {/* Legend */}
+        <line x1={W - 170} y1={PT + 14} x2={W - 148} y2={PT + 14} stroke="#1e40af" strokeWidth="2.5" />
+        <line x1={W - 170} y1={PT + 14} x2={W - 148} y2={PT + 14} stroke="#60a5fa" strokeWidth="1.4" />
+        <text x={W - 143} y={PT + 18} fill="var(--intro-text-dim)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Aggregate (all sessions)</text>
+        <line x1={W - 170} y1={PT + 28} x2={W - 148} y2={PT + 28} stroke="#94a3b8" strokeWidth="1.2" opacity="0.5" />
+        <text x={W - 143} y={PT + 32} fill="var(--intro-text-faint)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Per-distance sessions</text>
+      </svg>
+      <p style={{ textAlign:'center', fontSize:15, color:'var(--intro-text-muted)', fontFamily:'var(--font-mono,monospace)', marginTop:35 }}>
+        <br/>P50 latency 849 ms · P90 latency 2480 ms · outliers at 10 m attributed to advertising channel saturation
+      </p>
     </div>
   );
 }
@@ -220,7 +418,6 @@ const SECURITY_ITEMS = [
 function SecurityFrameworkSlide({ visible }: { visible: boolean }) {
   return (
     <div className="security-slide">
-      <div className="hook-label">PROTOCOLS</div>
       <h2 className="security-title">Security Framework</h2>
       
       <div className="security-grid">
@@ -237,7 +434,36 @@ function SecurityFrameworkSlide({ visible }: { visible: boolean }) {
               {item.icon}
             </div>
             <h3 className="security-card-title">{item.title}</h3>
-            <p className="security-card-desc">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Slide 11: Key Metrics (6-metric grid) ───────────────────────────────────
+function NumbersConc({ visibleCount }: { visibleCount: number }) {
+  const metrics = [
+    { value: '<2',    unit: 's',   label: 'END-TO-END LATENCY',        sub: 'measured across 5 hops in testing',              color: CYAN },
+    { value: '1,500', unit: 'm',   label: 'TESTED LORA RANGE',         sub: 'real-world outdoor deployment · SX1276',         color: GOLD },
+    { value: '20',    unit: 'm',   label: 'BLE PER-HOP RANGE',         sub: 'LE Coded PHY — indoor tested',                   color: CYAN },
+    { value: '200',   unit: '',    label: 'DEDUP CACHE SIZE',           sub: 'seen_msg_ids ring buffer per relay node',         color: GOLD },
+    { value: '250',   unit: 'B',   label: 'PACKET SIZE CAP',           sub: 'optimized for LoRa airtime constraints',          color: CYAN },
+    { value: '5',     unit: '',    label: 'MAX HOP COUNT (TTL)',        sub: 'flood-limited with managed jitter rebroadcast',   color: GOLD },
+  ];
+
+  return (
+    <div className="numbers-grid-wrap">
+      <div className="numbers-grid">
+        {metrics.map((m, i) => (
+          <div key={i} className={`ngrid-card ${visibleCount > i ? 'is-visible' : ''}`}
+            style={{ '--ng-delay': `${i * 160}ms` } as React.CSSProperties}>
+            <div className="ngrid-rule" style={{ background: m.color }} />
+            <div className="ngrid-value">
+              {m.value}<span className="ngrid-unit" style={{ color: m.color }}>{m.unit}</span>
+            </div>
+            <div className="ngrid-label">{m.label}</div>
+            <p className="ngrid-sub">{m.sub}</p>
           </div>
         ))}
       </div>
@@ -318,7 +544,6 @@ function ProblemList({ visible }: { visible: boolean }) {
           <span className="problem-list-emoji">{item.icon}</span>
           <div className="problem-list-text">
             <strong>{item.title}</strong>
-            <span>{item.desc}</span>
           </div>
         </li>
       ))}
@@ -530,7 +755,6 @@ function ComponentModal({ which, onClose }: { which: ComponentKey; onClose: () =
           <img src={spec.icon} alt={spec.name} className="comp-modal-icon" />
           <div className="comp-modal-title-group">
             <h3 className="comp-modal-name" style={{ color: spec.color }}>{spec.name}</h3>
-            <p className="comp-modal-subtitle">{spec.subtitle}</p>
           </div>
           <button className="comp-modal-close" onClick={onClose} aria-label="Close">✕</button>
         </div>
@@ -549,7 +773,6 @@ function ComponentModal({ which, onClose }: { which: ComponentKey; onClose: () =
           ))}
         </dl>
 
-        <p className="comp-modal-hint">Press ESC or click outside to close</p>
       </div>
     </div>
   );
@@ -603,8 +826,6 @@ function ComponentsCards({
           </div>
           <h3>{c.title}</h3>
           <p className="components-role">{c.role}</p>
-          <p className="components-spec">{c.spec}</p>
-          <span className="comp-tap-hint">TAP TO EXPLORE</span>
         </button>
       ))}
     </div>
@@ -901,7 +1122,6 @@ function FieldDetailPanel({ detail, onClose }: { detail: FieldDetail; onClose: (
             ))}
           </div>
         )}
-        <p className="pf-detail-hint">Press ESC or click a field again to close</p>
       </div>
     </div>
   );
@@ -1201,7 +1421,6 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
             fontFamily="var(--font-mono,monospace)" letterSpacing="0.12em"
             className="pf-click-hint-svg"
             style={{ pointerEvents: 'none' }}>
-            ↑ CLICK ANY FIELD TO EXPLORE ↑
           </text>
         )}
       </svg>
@@ -1217,7 +1436,6 @@ function PacketFormatDiagram({ active }: { active: boolean }) {
   );
 }
 
-<<<<<<< HEAD
 // ─── Result Image Lightbox ────────────────────────────────────────────────
 interface ResultImage {
   id: string;
@@ -1228,34 +1446,16 @@ interface ResultImage {
 
 const RESULT_IMAGES: ResultImage[] = [
   {
-    id: 'rssi-distance',
-    path: '/results/rssi-vs-distance.png',
-    title: 'RSSI vs Distance',
-    caption: 'Figure 8.3: Mean received RSSI vs. distance (log scale). Open-space measurements with error bars; through-wall measurements showing 7–15 dB excess insertion loss through a 20 cm concrete wall.'
-  },
-  {
-    id: 'ack-latency',
-    path: '/results/ack-round-trip.png',
-    title: 'ACK Round-Trip Time',
-    caption: 'Figure 8.2: Cumulative distribution of ACK round-trip time across all BLE direct-link sessions. P50 latency is 849 ms; P90 is 2480 ms. Outliers above 4000 ms attributed to advertising channel saturation.'
-  },
-  {
-    id: 'packet-mdr',
-    path: '/results/packet-mdr.png',
-    title: 'Packet & ACK Delivery Rate',
-    caption: 'Message Delivery Rate (MDR) and ACK-MDR across various distances. Packet MDR remains high in open space; through-wall degradation expected due to concrete attenuation.'
-  },
-  {
     id: 'lora-range-1',
     path: '/results/distance-measurement-1.png',
     title: 'LoRa Range Test 1',
-    caption: 'LoRa long-range test: 1,591.82 m measured distance across outdoor terrain with ~38 m elevation change. Demonstrates robust reception across geographic distance.'
+    caption: ''
   },
   {
     id: 'lora-range-2',
     path: '/results/distance-measurement-2.png',
     title: 'LoRa Range Test 2',
-    caption: 'Second LoRa field test: 801.45 m measured distance with ~4 m elevation variation, validating repeatability of long-range performance in urban environment.'
+    caption: ''
   },
 ];
 
@@ -1279,353 +1479,12 @@ function ImageLightbox({ image, onClose }: { image: ResultImage; onClose: () => 
           </div>
         </div>
 
-        <p className="lightbox-hint">Press ESC or click outside to close</p>
       </div>
-=======
-// ─── Result Slide A: MDR vs Distance bar chart ───────────────────────────────
-function MDRChart({ active }: { active: boolean }) {
-  const bars = [
-    { label: '1 cm',      mdr: 100, ack: 100 },
-    { label: '30 cm (W)', mdr: 100, ack: 80,  wall: true },
-    { label: '1 m',       mdr: 60,  ack: 60  },
-    { label: '6 m (W)',   mdr: 100, ack: 18,  wall: true },
-    { label: '10 m',      mdr: 92,  ack: 53  },
-    { label: '15 m',      mdr: 100, ack: 0,   ackNA: true },
-    { label: '20 m',      mdr: 100, ack: 40  },
-    { label: '30 m',      mdr: 87,  ack: 17  },
-  ];
-  const W = 820, H = 320, PL = 54, PR = 20, PT = 24, PB = 56;
-  const chartW = W - PL - PR;
-  const chartH = H - PT - PB;
-  const groupW = chartW / bars.length;
-  const bw = groupW * 0.28;
-  const yTicks = [0, 20, 40, 60, 80, 100];
-
-  return (
-    <div className={`res-chart-wrap ${active ? 'is-active' : ''}`}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxHeight: 340 }}>
-        {/* Y-axis grid + labels */}
-        {yTicks.map(v => {
-          const y = PT + chartH - (v / 100) * chartH;
-          return (
-            <g key={v}>
-              <line x1={PL} y1={y} x2={W - PR} y2={y}
-                stroke="var(--intro-border-soft)" strokeWidth="0.6" strokeDasharray={v === 0 ? '0' : '3 3'} />
-              <text x={PL - 6} y={y + 4} textAnchor="end"
-                fill="var(--intro-text-faint)" fontSize="9" fontFamily="var(--font-mono,monospace)">{v}</text>
-            </g>
-          );
-        })}
-        {/* Y axis label */}
-        <text x={12} y={PT + chartH / 2} textAnchor="middle"
-          fill="var(--intro-text-muted)" fontSize="10" fontFamily="var(--font-mono,monospace)"
-          transform={`rotate(-90, 12, ${PT + chartH / 2})`}>MDR (%)</text>
-
-        {/* Bars */}
-        {bars.map((b, i) => {
-          const gx = PL + i * groupW;
-          const cx = gx + groupW / 2;
-          const mdrH = (b.mdr / 100) * chartH;
-          const ackH = (b.ack / 100) * chartH;
-          const delay = active ? `${i * 80}ms` : '0ms';
-          return (
-            <g key={i}>
-              {/* Packet MDR bar (cyan/blue) */}
-              <rect
-                x={cx - bw - 2} y={PT + chartH - mdrH} width={bw} height={mdrH}
-                fill={CYAN} opacity="0.75" rx="2"
-                style={{ transition: `height 0.5s ease ${delay}, y 0.5s ease ${delay}` }}
-              />
-              {/* ACK-MDR bar (gold) */}
-              {!b.ackNA ? (
-                <rect
-                  x={cx + 2} y={PT + chartH - ackH} width={bw} height={ackH}
-                  fill={GOLD} opacity="0.75" rx="2"
-                  style={{ transition: `height 0.5s ease ${delay}, y 0.5s ease ${delay}` }}
-                />
-              ) : (
-                /* hatched bar for N/A */
-                <rect x={cx + 2} y={PT + chartH - 8} width={bw} height={8}
-                  fill="none" stroke={GOLD} strokeWidth="1" strokeDasharray="3 2" opacity="0.5" rx="1" />
-              )}
-              {/* X label */}
-              <text x={cx} y={PT + chartH + 14} textAnchor="middle"
-                fill={b.wall ? '#f87171' : 'var(--intro-text-muted)'} fontSize="8.5"
-                fontFamily="var(--font-mono,monospace)">{b.label}</text>
-              {b.wall && (
-                <text x={cx} y={PT + chartH + 25} textAnchor="middle"
-                  fill="#f87171" fontSize="7" fontFamily="var(--font-mono,monospace)">Wall</text>
-              )}
-            </g>
-          );
-        })}
-
-        {/* Legend */}
-        <rect x={PL + 10} y={PT + 4} width={10} height={10} fill={CYAN} opacity="0.75" rx="2" />
-        <text x={PL + 24} y={PT + 13} fill="var(--intro-text-dim)" fontSize="9" fontFamily="var(--font-mono,monospace)">Packet MDR</text>
-        <rect x={PL + 100} y={PT + 4} width={10} height={10} fill={GOLD} opacity="0.75" rx="2" />
-        <text x={PL + 114} y={PT + 13} fill="var(--intro-text-dim)" fontSize="9" fontFamily="var(--font-mono,monospace)">ACK-MDR (N/A for 15 m manual)</text>
-
-        {/* X axis */}
-        <line x1={PL} y1={PT + chartH} x2={W - PR} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
-        <line x1={PL} y1={PT} x2={PL} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
-      </svg>
-
-      {/* Caption */}
-      <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--intro-text-muted)', marginTop: 8, fontFamily: 'var(--font-mono,monospace)' }}>
-        Packet MDR ≥ 86.7% at all tested distances · ACK-MDR degrades with distance &amp; wall penetration
-      </p>
->>>>>>> 485a9e44a883a6a66031678146183b63139488c8
     </div>
   );
 }
 
-<<<<<<< HEAD
 // ─── Slide 16: Key Results (image gallery) ───────────────────────────────────
-=======
-// ─── Result Slide B: BLE vs LoRa range circles ───────────────────────────────
-function RangeCircles({ active }: { active: boolean }) {
-  const W = 760, H = 340;
-  const cx = W / 2, cy = H / 2 + 10;
-  const bleR = 24;   // ~30 m BLE
-  const loraR = 210; // ~1500 m LoRa (≈50× visual)
-
-  return (
-    <div className={`res-chart-wrap ${active ? 'is-active' : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxHeight: 340 }}>
-        {/* LoRa circle */}
-        <circle cx={cx} cy={cy} r={loraR}
-          fill="rgba(167,139,250,0.06)" stroke={PURPLE} strokeWidth="1.5" strokeDasharray="6 4" opacity="0.7" />
-        <text x={cx} y={cy - loraR - 10} textAnchor="middle"
-          fill={PURPLE} fontSize="11" fontFamily="var(--font-mono,monospace)" opacity="0.85">
-          LoRa Extended Reach
-        </text>
-        <text x={cx} y={cy - loraR + 4} textAnchor="middle"
-          fill={PURPLE} fontSize="10" fontFamily="var(--font-mono,monospace)" opacity="0.65">
-          ~1,500 m radius · verified 1,591 m
-        </text>
-
-        {/* BLE circle */}
-        <circle cx={cx} cy={cy} r={bleR}
-          fill="rgba(0,188,212,0.12)" stroke={CYAN} strokeWidth="1.5" />
-        <text x={cx} y={cy - bleR - 6} textAnchor="middle"
-          fill={CYAN} fontSize="9.5" fontFamily="var(--font-mono,monospace)" opacity="0.9">
-          BLE Direct
-        </text>
-        <text x={cx} y={cy - bleR + 6} textAnchor="middle"
-          fill={CYAN} fontSize="9" fontFamily="var(--font-mono,monospace)" opacity="0.6">
-          ~30 m
-        </text>
-
-        {/* Scale annotation */}
-        <line x1={cx + bleR + 6} y1={cy} x2={cx + loraR - 4} y2={cy}
-          stroke="var(--intro-border)" strokeWidth="0.8" markerEnd="url(#arr)" />
-        <text x={cx + bleR + (loraR - bleR) / 2} y={cy - 8} textAnchor="middle"
-          fill="var(--intro-text-faint)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">
-          ~50× radius increase
-        </text>
-
-        {/* Center dot */}
-        <circle cx={cx} cy={cy} r={4} fill={CYAN} opacity="0.9" />
-        <text x={cx} y={cy + 16} textAnchor="middle"
-          fill="var(--intro-text-dim)" fontSize="8" fontFamily="var(--font-mono,monospace)">You</text>
-
-        {/* Concentric scale rings */}
-        {[0.33, 0.66].map((f, i) => (
-          <circle key={i} cx={cx} cy={cy} r={loraR * f}
-            fill="none" stroke={PURPLE} strokeWidth="0.4" strokeDasharray="2 5" opacity="0.25" />
-        ))}
-      </svg>
-      <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--intro-text-muted)', fontFamily: 'var(--font-mono,monospace)', marginTop: 4 }}>
-        Peer Reach extends effective BLE range by bridging over LoRa — field-verified at 1,591 m
-      </p>
-    </div>
-  );
-}
-
-// ─── Result Slide C: LoRa field test maps ────────────────────────────────────
-function LoRaFieldTests({ active }: { active: boolean }) {
-  const tests = [
-    {
-      name: 'Cairo University',
-      city: 'Giza, Egypt',
-      distance: '801.45 m',
-      heading: '107.91°',
-      desc: 'Sender at Faculty of Engineering, receiver near Cairo University entrance across urban blocks',
-      color: GREEN,
-      delay: 0,
-    },
-    {
-      name: 'October City',
-      city: '6th October City, Egypt',
-      distance: '1,591.82 m',
-      heading: '17.95°',
-      desc: 'Open desert terrain, sender south of receiver — furthest verified link distance',
-      color: PURPLE,
-      delay: 150,
-    },
-  ];
-
-  return (
-    <div className={`res-lora-tests ${active ? 'is-active' : ''}`}>
-      {tests.map((t, i) => (
-        <div key={i} className="res-lora-card" style={{ '--card-delay': `${t.delay}ms` } as React.CSSProperties}>
-          {/* Map SVG — stylised path between two pins */}
-          <svg viewBox="0 0 260 140" className="res-lora-map">
-            {/* Grid */}
-            {[0,1,2,3].map(r => <line key={`h${r}`} x1={0} y1={r*35+17} x2={260} y2={r*35+17} stroke="var(--intro-border-soft)" strokeWidth="0.5" />)}
-            {[0,1,2,3,4,5].map(c => <line key={`v${c}`} x1={c*43+8} y1={0} x2={c*43+8} y2={140} stroke="var(--intro-border-soft)" strokeWidth="0.5" />)}
-
-            {i === 0 ? (
-              /* Cairo: mostly horizontal path */
-              <>
-                <line x1={52} y1={70} x2={208} y2={70} stroke={t.color} strokeWidth="1.5" strokeDasharray="5 3" opacity="0.6" />
-                {/* Sender pin */}
-                <circle cx={52} cy={70} r={7} fill="#ef4444" opacity="0.9" />
-                <text x={52} y={95} textAnchor="middle" fill="#ef4444" fontSize="8" fontFamily="var(--font-mono,monospace)">Sender</text>
-                {/* Receiver pin */}
-                <circle cx={208} cy={70} r={7} fill={t.color} opacity="0.9" />
-                <text x={208} y={95} textAnchor="middle" fill={t.color} fontSize="8" fontFamily="var(--font-mono,monospace)">Receiver</text>
-              </>
-            ) : (
-              /* October: mostly vertical path */
-              <>
-                <line x1={130} y1={115} x2={130} y2={25} stroke={t.color} strokeWidth="1.5" strokeDasharray="5 3" opacity="0.6" />
-                <circle cx={130} cy={115} r={7} fill="#ef4444" opacity="0.9" />
-                <text x={154} y={118} fill="#ef4444" fontSize="8" fontFamily="var(--font-mono,monospace)">Sender</text>
-                <circle cx={130} cy={25} r={7} fill={t.color} opacity="0.9" />
-                <text x={154} y={28} fill={t.color} fontSize="8" fontFamily="var(--font-mono,monospace)">Receiver</text>
-              </>
-            )}
-
-            {/* Distance label on line */}
-            <text x={130} y={i === 0 ? 62 : 72} textAnchor="middle"
-              fill={t.color} fontSize="9.5" fontFamily="var(--font-mono,monospace)" fontWeight="600">
-              {t.distance}
-            </text>
-          </svg>
-
-          {/* Stats */}
-          <div className="res-lora-info">
-            <div className="res-lora-title" style={{ color: t.color }}>{t.name}</div>
-            <div className="res-lora-city">{t.city}</div>
-            <div className="res-lora-stat"><span>Distance</span><strong style={{ color: t.color }}>{t.distance}</strong></div>
-            <div className="res-lora-stat"><span>Heading</span><strong>{t.heading}</strong></div>
-            <div className="res-lora-desc">{t.desc}</div>
-            <div className="res-lora-badge" style={{ color: t.color, borderColor: t.color }}>✓ Message Delivered</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── Result Slide D: ACK RTT CDF ─────────────────────────────────────────────
-function ACKCDFChart({ active }: { active: boolean }) {
-  const W = 820, H = 320, PL = 58, PR = 20, PT = 18, PB = 58;
-  const chartW = W - PL - PR;
-  const chartH = H - PT - PB;
-  const maxX = 4500;
-
-  const toX = (ms: number) => PL + (ms / maxX) * chartW;
-  const toY = (prob: number) => PT + chartH - prob * chartH;
-
-  const pathD = (pts: [number, number][]) =>
-    pts.map(([ms, p], i) => `${i === 0 ? 'M' : 'L'}${toX(ms).toFixed(1)},${toY(p).toFixed(1)}`).join(' ');
-
-  // Aggregate bold line
-  const agg: [number, number][] = [
-    [0,0],[150,0.01],[300,0.05],[450,0.14],[550,0.24],[650,0.37],
-    [750,0.47],[849,0.58],[950,0.63],[1100,0.68],[1300,0.73],
-    [1500,0.78],[1700,0.82],[1900,0.85],[2100,0.87],[2300,0.89],
-    [2480,0.90],[2700,0.92],[3000,0.94],[3500,0.97],[4000,0.985],[4500,1.0],
-  ];
-
-  // Per-session lighter lines (approximated from Figure 8.2)
-  const sessions: { pts: [number, number][]; col: string; op: number }[] = [
-    { pts:[[0,0],[200,0.05],[400,0.22],[600,0.5],[800,0.68],[1000,0.82],[1300,0.93],[1800,0.99],[2200,1.0]], col:'#93c5fd', op:0.5 },
-    { pts:[[0,0],[300,0.04],[600,0.28],[900,0.54],[1200,0.72],[1600,0.86],[2200,0.95],[3000,0.99],[3500,1.0]], col:'#94a3b8', op:0.4 },
-    { pts:[[0,0],[400,0.03],[700,0.14],[1000,0.34],[1400,0.57],[1800,0.72],[2200,0.82],[2800,0.9],[3500,0.97],[4500,1.0]], col:'#94a3b8', op:0.35 },
-    { pts:[[0,0],[600,0.04],[1000,0.1],[1500,0.27],[2000,0.51],[2500,0.71],[3000,0.85],[3800,0.95],[4500,1.0]], col:'#f59e0b', op:0.55 },
-    { pts:[[0,0],[500,0.14],[800,0.44],[1100,0.67],[1400,0.81],[1800,0.91],[2500,0.97],[3200,1.0]], col:'#93c5fd', op:0.35 },
-  ];
-
-  const xTicks = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500];
-  const yTicks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
-
-  return (
-    <div className={`res-chart-wrap ${active ? 'is-active' : ''}`}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxHeight: 330 }}>
-        {/* Y grid + labels */}
-        {yTicks.map(v => (
-          <g key={v}>
-            <line x1={PL} y1={toY(v)} x2={W - PR} y2={toY(v)}
-              stroke="var(--intro-border-soft)" strokeWidth={v === 0 ? 1 : 0.6} strokeDasharray={v === 0 ? '0' : '3 3'} />
-            <text x={PL - 6} y={toY(v) + 4} textAnchor="end"
-              fill="var(--intro-text-faint)" fontSize="9" fontFamily="var(--font-mono,monospace)">{v.toFixed(1)}</text>
-          </g>
-        ))}
-        {/* X grid + labels */}
-        {xTicks.map(v => (
-          <g key={v}>
-            {v > 0 && <line x1={toX(v)} y1={PT} x2={toX(v)} y2={PT + chartH}
-              stroke="var(--intro-border-soft)" strokeWidth="0.6" strokeDasharray="3 3" />}
-            <text x={toX(v)} y={PT + chartH + 14} textAnchor="middle"
-              fill="var(--intro-text-faint)" fontSize="9" fontFamily="var(--font-mono,monospace)">{v}</text>
-          </g>
-        ))}
-        {/* Axes */}
-        <line x1={PL} y1={PT} x2={PL} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
-        <line x1={PL} y1={PT + chartH} x2={W - PR} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
-
-        {/* Axis labels */}
-        <text x={12} y={PT + chartH / 2} textAnchor="middle"
-          fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)"
-          transform={`rotate(-90,12,${PT + chartH / 2})`}>Cumulative probability</text>
-        <text x={PL + chartW / 2} y={H - 4} textAnchor="middle"
-          fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)">ACK Round-Trip Time (ms)</text>
-
-        {/* Per-session lines */}
-        {sessions.map((s, i) => (
-          <path key={i} d={pathD(s.pts)} fill="none" stroke={s.col} strokeWidth="1.2" opacity={s.op} />
-        ))}
-
-        {/* P50 dashed reference */}
-        <line x1={PL} y1={toY(0.58)} x2={toX(849)} y2={toY(0.58)}
-          stroke="var(--intro-text-faint)" strokeWidth="0.8" strokeDasharray="4 3" />
-        <line x1={toX(849)} y1={toY(0.58)} x2={toX(849)} y2={PT + chartH}
-          stroke="var(--intro-text-faint)" strokeWidth="0.8" strokeDasharray="4 3" />
-        <text x={toX(849) + 4} y={toY(0.58) - 5}
-          fill="var(--intro-text-muted)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">P50 = 849 ms</text>
-
-        {/* P90 dashed reference */}
-        <line x1={PL} y1={toY(0.90)} x2={toX(2480)} y2={toY(0.90)}
-          stroke="#f59e0b" strokeWidth="0.8" strokeDasharray="4 3" opacity="0.7" />
-        <line x1={toX(2480)} y1={toY(0.90)} x2={toX(2480)} y2={PT + chartH}
-          stroke="#f59e0b" strokeWidth="0.8" strokeDasharray="4 3" opacity="0.7" />
-        <text x={toX(2480) + 4} y={toY(0.90) - 5}
-          fill="#f59e0b" fontSize="8.5" fontFamily="var(--font-mono,monospace)">P90 = 2480 ms</text>
-
-        {/* Aggregate bold line */}
-        <path d={pathD(agg)} fill="none" stroke="#1e40af" strokeWidth="2.8" opacity="0.9" />
-        <path d={pathD(agg)} fill="none" stroke="#60a5fa" strokeWidth="1.6" opacity="0.7" />
-
-        {/* Legend */}
-        <line x1={W - 170} y1={PT + 14} x2={W - 148} y2={PT + 14} stroke="#1e40af" strokeWidth="2.5" />
-        <line x1={W - 170} y1={PT + 14} x2={W - 148} y2={PT + 14} stroke="#60a5fa" strokeWidth="1.4" />
-        <text x={W - 143} y={PT + 18} fill="var(--intro-text-dim)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Aggregate (all sessions)</text>
-        <line x1={W - 170} y1={PT + 28} x2={W - 148} y2={PT + 28} stroke="#94a3b8" strokeWidth="1.2" opacity="0.5" />
-        <text x={W - 143} y={PT + 32} fill="var(--intro-text-faint)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Per-distance sessions</text>
-      </svg>
-      <p style={{ textAlign:'center', fontSize:12, color:'var(--intro-text-muted)', fontFamily:'var(--font-mono,monospace)', marginTop:6 }}>
-        P50 latency 849 ms · P90 latency 2480 ms · outliers at 10 m attributed to advertising channel saturation
-      </p>
-    </div>
-  );
-}
-
-// ─── Slide 11: Key Metrics (6-metric grid) ───────────────────────────────────
->>>>>>> 485a9e44a883a6a66031678146183b63139488c8
 function NumbersSlide({ visibleCount }: { visibleCount: number }) {
   const [selectedImage, setSelectedImage] = useState<ResultImage | null>(null);
 
@@ -1741,8 +1600,6 @@ function EncryptionFlowAnimation({ replayKey }: { replayKey: number }) {
       </svg>
       <div className="crypto-lines">
         <p className="line1">QR key exchange — keys never cross the mesh</p>
-        <p className="line2">Curve25519 ECDH → HKDF-SHA256 → AES-128-GCM</p>
-        <p className="line3">Relay nodes see only ciphertext — zero plaintext at any hop</p>
       </div>
     </div>
   );
@@ -1947,9 +1804,7 @@ function LiveDemoSlide({ isActive }: { isActive: boolean }) {
   return (
     <div className="demo-slide">
       <div className="demo-steps-panel">
-        <div className="hook-label">LIVE DEMO</div>
         <h2 className="demo-steps-heading">System Demonstration</h2>
-        <p className="demo-steps-sub">Your teammates have the real app running — follow along on screen.</p>
         <ol className="demo-steps-list">
           {DEMO_STEPS.map((step, i) => (
             <li key={i} className="demo-step-item">
@@ -2247,6 +2102,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
   const [currentSectionIndex,  setCurrentSectionIndex]  = useState(0);
   const [introNavDirection,    setIntroNavDirection]     = useState<'forward' | 'backward'>('forward');
   const [visibleNumberCount,   setVisibleNumberCount]    = useState(0);
+  const [visibleNumberCount2,   setVisibleNumberCount2]    = useState(0);
   const [cryptoReplayKey,      setCryptoReplayKey]       = useState(0);
   const [secDeepReplayKey,     setSecDeepReplayKey]      = useState(0);
   const [archActive,           setArchActive]            = useState(false);
@@ -2357,9 +2213,9 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
     return () => window.clearTimeout(t);
   }, [currentSectionIndex, showProblemList]);
 
-  // Related table (index 21 = hook-related)
+  // Related table (index 16 = hook-related)
   useEffect(() => {
-    if (currentSectionIndex !== 21) return;
+    if (currentSectionIndex !== 16) return;
     const t = window.setTimeout(() => setShowRelatedTable(true), 400);
     return () => window.clearTimeout(t);
   }, [currentSectionIndex]);
@@ -2376,14 +2232,21 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
 
   // Numbers (index 15 = hook-numbers)
   useEffect(() => {
-    if (currentSectionIndex !== 16) { setVisibleNumberCount(0); return; }
+    if (currentSectionIndex !== 17) { setVisibleNumberCount(0); return; }
     setVisibleNumberCount(0);
     const ts = [120, 280, 440, 600, 760, 920].map((ms, i) =>
       window.setTimeout(() => setVisibleNumberCount(i + 1), ms)
     );
     return () => ts.forEach(t => window.clearTimeout(t));
   }, [currentSectionIndex]);
-
+  useEffect(() => {
+    if (currentSectionIndex !== 19) { setVisibleNumberCount2(0); return; }
+    setVisibleNumberCount2(0);
+    const ts = [120, 280, 440, 600, 760, 920].map((ms, i) =>
+      window.setTimeout(() => setVisibleNumberCount2(i + 1), ms)
+    );
+    return () => ts.forEach(t => window.clearTimeout(t));
+  }, [currentSectionIndex]);
   // Security overview (index 12 = hook-security)
   useEffect(() => {
     if (currentSectionIndex === 12) setCryptoReplayKey(k => k + 1);
@@ -2433,7 +2296,6 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
           <div className={`cover-scroll-cue ${mounted && !hideScrollCue ? 'is-visible' : ''}`}>
             <div className="scroll-line"><span className="scroll-dot" /></div>
-            <div className="scroll-label">SCROLL TO EXPLORE</div>
           </div>
         </SectionFrame>
 
@@ -2447,7 +2309,6 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         {/* ── Slide 03: Abstract ── */}
         <SectionFrame id="hook-abstract" isActive={currentSectionIndex === 2}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <div className="hook-label">ABSTRACT</div>
             <h2>Thesis Overview</h2>
             <AbstractSlide />
           </div>
@@ -2456,7 +2317,6 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         {/* ── Slide 04: Problem ── */}
         <SectionFrame id="hook-problem" isActive={currentSectionIndex === 3}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <div className="hook-label">MOTIVATION</div>
             <h2>Problem Statement</h2>
             <ProblemList visible={showProblemList} />
             <p className="hook-subline">Existing solutions depend on infrastructure that isn't always there.</p>
@@ -2475,7 +2335,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         {/* ── Slide 06: Range Problem ── */}
         <SectionFrame id="hook-range" isActive={currentSectionIndex === 5}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <h2>But Bluetooth only reaches ~15–20 meters.</h2>
+            <h2>Reaches ~15–20 meters only.</h2>
             <RangeFailureAnimation />
             <p className="hook-subline">In large areas, BLE clusters are isolated — the gap between them cannot be bridged by BLE alone.</p>
           </div>
@@ -2484,7 +2344,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         {/* ── Slide 07: Solution ── */}
         <SectionFrame id="hook-solution" isActive={currentSectionIndex === 6}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <h2>So we extended the range by 100×.</h2>
+            <h2>Range was extended by 100×.</h2>
             <SolutionAnimation />
             <p className="hook-subline">LoRa radio bridges the gap between BLE clusters, extending our coverage radius to 1,500 meters — no infrastructure required.</p>
           </div>
@@ -2517,7 +2377,6 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         {/* ── Slide 11: Packet Format ── */}
         <SectionFrame id="hook-packet" isActive={currentSectionIndex === 10}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1080px, 100%)' }}>
-            <div className="hook-label">PROTOCOL DESIGN</div>
             <h2>Packet Design</h2>
             <PacketFormatDiagram active={packetActive} />
           </div>
@@ -2526,7 +2385,6 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         {/* ── Slide 12: Flooding Algorithm ── */}
         <SectionFrame id="hook-flooding" isActive={currentSectionIndex === 11}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1140px, 100%)' }}>
-            <div className="hook-label">ROUTING PROTOCOL</div>
             <h2>Managed Flooding Algorithm</h2>
             <FloodingAlgorithmSlide isActive={currentSectionIndex === 11} />
           </div>
@@ -2551,7 +2409,6 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         {/* ── Slide 15: Threat Model ── */}
         <SectionFrame id="hook-security-deep" isActive={currentSectionIndex === 14}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
-            <div className="hook-label">SECURITY ANALYSIS</div>
             <h2>Threat Model</h2>
             <SecurityDeepDiveAnimation replayKey={secDeepReplayKey} />
           </div>
@@ -2560,70 +2417,54 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         {/* ── Slide 14: Security Scenarios ── */}
         <SectionFrame id="hook-security-scenarios" isActive={currentSectionIndex === 15}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
-            <div className="hook-label">SECURITY EVALUATION</div>
             <h2>Attack Scenarios</h2>
             <SecurityScenariosSlide />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 16: Key Results ── */}
-        <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 16}>
-          <div className={`hook-inner hook-numbers intro-content ${dir}`}>
-            <div className="hook-label">EXPERIMENTAL RESULTS</div>
-            <h2>Key Results</h2>
-            <NumbersSlide visibleCount={visibleNumberCount} />
-          </div>
-        </SectionFrame>
-
         {/* ── Slide 17: MDR vs Distance ── */}
-        <SectionFrame id="hook-results-mdr" isActive={currentSectionIndex === 17}>
+        <SectionFrame id="hook-results-mdr" isActive={currentSectionIndex === 16}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(900px, 100%)' }}>
-            <div className="hook-label">EXPERIMENTAL RESULTS</div>
-            <h2>Message Delivery Ratio vs Distance</h2>
+            <h2>MDR vs Distance</h2>
             <MDRChart active={currentSectionIndex === 17} />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 18: BLE vs LoRa range circles ── */}
-        <SectionFrame id="hook-results-range" isActive={currentSectionIndex === 18}>
-          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(860px, 100%)' }}>
-            <div className="hook-label">EXPERIMENTAL RESULTS</div>
-            <h2>Effective Range: BLE vs Peer Reach</h2>
-            <RangeCircles active={currentSectionIndex === 18} />
-          </div>
-        </SectionFrame>
-
-        {/* ── Slide 19: LoRa field tests ── */}
-        <SectionFrame id="hook-results-lora" isActive={currentSectionIndex === 19}>
-          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(980px, 100%)' }}>
-            <div className="hook-label">EXPERIMENTAL RESULTS</div>
-            <h2>LoRa Field Tests</h2>
-            <LoRaFieldTests active={currentSectionIndex === 19} />
+        {/* ── Slide 16: Lora ── */}
+        <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 17}>
+          <div className={`hook-inner hook-numbers intro-content ${dir}`}>
+            <h2>Lora</h2>
+            <NumbersSlide visibleCount={visibleNumberCount} />
           </div>
         </SectionFrame>
 
         {/* ── Slide 20: ACK RTT CDF ── */}
-        <SectionFrame id="hook-results-cdf" isActive={currentSectionIndex === 20}>
+        <SectionFrame id="hook-results-cdf" isActive={currentSectionIndex === 18}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(900px, 100%)' }}>
-            <div className="hook-label">EXPERIMENTAL RESULTS</div>
-            <h2>ACK Round-Trip Time Distribution</h2>
+            <h2>ACK Round-Trip Time</h2>
             <ACKCDFChart active={currentSectionIndex === 20} />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 21: Comparison ── */}
-        <SectionFrame id="hook-related" isActive={currentSectionIndex === 21}>
+        {/* ── Slide 16: Key Results ── */}
+        <SectionFrame id="hook-numbers-conc" isActive={currentSectionIndex === 19}>
+          <div className={`hook-inner hook-numbers-conc intro-content ${dir}`}>
+            <h2>Key Results</h2>
+            <NumbersConc visibleCount={visibleNumberCount2} />
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 17: Comparison ── */}
+        <SectionFrame id="hook-related" isActive={currentSectionIndex === 20}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1100px, 100%)' }}>
-            <div className="hook-label">LITERATURE REVIEW</div>
-            <h2>Comparison with Existing Systems</h2>
+            <h2>Comparison</h2>
             <RelatedWorkTable visible={showRelatedTable} />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 22: Closing / Enter System ── */}
-        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 22}>
+        {/* ── Slide 18: Closing / Enter System ── */}
+        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 21}>
           <div className={`hook-inner transition-inner intro-content ${dir}`}>
-            <div className="hook-label">CONCLUSION</div>
             <h2>Peer Reach</h2>
             <p className="hook-subline">A working prototype. A real mesh. Let's show you how it works.</p>
             <button className="enter-system-btn" onClick={onEnterSystem}>Enter the System →</button>
