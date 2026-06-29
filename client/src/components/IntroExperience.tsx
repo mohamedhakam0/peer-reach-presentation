@@ -265,7 +265,7 @@ function ACKCDFChart({ active }: { active: boolean }) {
         <text x={12} y={PT + chartH / 2} textAnchor="middle"
           fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)"
           transform={`rotate(-90,12,${PT + chartH / 2})`}>Cumulative probability</text>
-        <text x={PL + chartW / 2} y={H - 4} textAnchor="middle"
+        <text x={PL + chartW / 2} y={H - 30} textAnchor="middle"
           fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)">ACK Round-Trip Time (ms)</text>
 
         {/* Per-session lines */}
