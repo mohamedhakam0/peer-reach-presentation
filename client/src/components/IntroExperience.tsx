@@ -309,15 +309,16 @@ function ACKCDFChart({ active }: { active: boolean }) {
 
 // ─── Agenda slide ─────────────────────────────────────────────────────────────
 const AGENDA_ITEMS = [
-  { num: '01',    label: 'Thesis Overview',    desc: '' },
-  { num: '02',    label: 'Problem Statement',  desc: '' },
-  { num: '03', label: 'Background',         desc: '' },
-  { num: '04',    label: 'System Model',       desc: '' },
-  { num: '05', label: 'System & Demo',      desc: '' },
-  { num: '06',    label: 'Packet Design',      desc: '' },
-  { num: '07', label: 'Security',           desc: '' },
-  { num: '08',    label: 'Key Results',        desc: '' },
-  { num: '09',    label: 'Comparison',         desc: '' },
+  { num: '01', label: 'Thesis Overview',  desc: '' },
+  { num: '02', label: 'Problem Statement', desc: '' },
+  { num: '03', label: 'Background',       desc: '' },
+  { num: '04', label: 'System Model',     desc: '' },
+  { num: '05', label: 'System & Demo',    desc: '' },
+  { num: '06', label: 'Packet Design',    desc: '' },
+  { num: '07', label: 'Security',         desc: '' },
+  { num: '08', label: 'Key Results',      desc: '' },
+  { num: '09', label: 'Comparison',       desc: '' },
+  { num: '10', label: 'Future Work',      desc: '' },
 ];
 
 function AgendaSlide() {
@@ -2595,13 +2596,12 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         <SectionFrame id="hook-future-work" isActive={currentSectionIndex === 20}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(760px, 100%)' }}>
             <div className="hook-label">FUTURE WORK</div>
-            <h2>What's Next</h2>
+            <h2>Future Work</h2>
             <ul className="future-work-list">
-              <li><span className="fw-num">01</span>Multi-path LoRa routing with per-link RSSI-aware relay selection</li>
-              <li><span className="fw-num">02</span>iOS companion app — CoreBluetooth peripheral & central roles</li>
-              <li><span className="fw-num">03</span>Solar-powered autonomous relay node enclosure</li>
-              <li><span className="fw-num">04</span>Group messaging & broadcast channel support</li>
-              <li><span className="fw-num">05</span>Adaptive spreading factor tuning based on link quality</li>
+              <li><span className="fw-num">01</span>iOS Feasibility</li>
+              <li><span className="fw-num">02</span>Dynamic Relay Selection Based on RSSI and Battery Level</li>
+              <li><span className="fw-num">03</span>Adaptive TTL and Message Prioritization</li>
+              <li><span className="fw-num">04</span>Store-and-Forward for Intermittent Connectivity</li>
             </ul>
           </div>
         </SectionFrame>
