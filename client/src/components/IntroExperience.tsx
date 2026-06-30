@@ -76,10 +76,11 @@ const INTRO_SECTION_IDS = [
   'hook-results-mdr',         // 17 — NEW: MDR vs distance bar chart     
   'hook-numbers',             // 15
   'hook-results-cdf',         // 17
-  'hook-results-range',       // 18 — BLE vs LoRa range circles
-  'hook-numbers-conc',        // 19
-  'hook-related',             // 20
-  'hook-transition',          // 21
+  'hook-numbers-conc',        // 18
+  'hook-related',             // 19
+  'hook-future-work',         // 20
+  'hook-questions',           // 21
+  'hook-transition',          // 22
 ] as const;
 
 const TOTAL_SLIDES = INTRO_SECTION_IDS.length;
@@ -2350,9 +2351,9 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
     return () => window.clearTimeout(t);
   }, [currentSectionIndex, showProblemList]);
 
-  // Related table (index 20 = hook-related)
+  // Related table (index 19 = hook-related)
   useEffect(() => {
-    if (currentSectionIndex !== 20) return;
+    if (currentSectionIndex !== 19) return;
     const t = window.setTimeout(() => setShowRelatedTable(true), 400);
     return () => window.clearTimeout(t);
   }, [currentSectionIndex]);
@@ -2376,9 +2377,9 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
     );
     return () => ts.forEach(t => window.clearTimeout(t));
   }, [currentSectionIndex]);
-  // Numbers conc (index 19 = hook-numbers-conc)
+  // Numbers conc (index 18 = hook-numbers-conc)
   useEffect(() => {
-    if (currentSectionIndex !== 19) { setVisibleNumberCount2(0); return; }
+    if (currentSectionIndex !== 18) { setVisibleNumberCount2(0); return; }
     setVisibleNumberCount2(0);
     const ts = [120, 280, 440, 600, 760, 920].map((ms, i) =>
       window.setTimeout(() => setVisibleNumberCount2(i + 1), ms)
@@ -2572,17 +2573,8 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 18: BLE vs LoRa Range ── */}
-        <SectionFrame id="hook-results-range" isActive={currentSectionIndex === 18}>
-          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(860px, 100%)' }}>
-            <div className="hook-label">EXPERIMENTAL RESULTS</div>
-            <h2>Effective Range: BLE vs Peer Reach</h2>
-            <RangeCircles active={currentSectionIndex === 18} />
-          </div>
-        </SectionFrame>
-
-        {/* ── Slide 19: Key Results ── */}
-        <SectionFrame id="hook-numbers-conc" isActive={currentSectionIndex === 19}>
+        {/* ── Slide 18: Key Results ── */}
+        <SectionFrame id="hook-numbers-conc" isActive={currentSectionIndex === 18}>
           <div className={`hook-inner hook-numbers-conc intro-content ${dir}`}>
             <div className="hook-label">EXPERIMENTAL RESULTS</div>
             <h2>Key Results</h2>
@@ -2590,8 +2582,8 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 20: Comparison ── */}
-        <SectionFrame id="hook-related" isActive={currentSectionIndex === 20}>
+        {/* ── Slide 19: Comparison ── */}
+        <SectionFrame id="hook-related" isActive={currentSectionIndex === 19}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1100px, 100%)' }}>
             <div className="hook-label">LITERATURE REVIEW</div>
             <h2>Comparison with Existing Systems</h2>
@@ -2599,8 +2591,32 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 21: Closing / Enter System ── */}
-        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 21}>
+        {/* ── Slide 20: Future Work ── */}
+        <SectionFrame id="hook-future-work" isActive={currentSectionIndex === 20}>
+          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(760px, 100%)' }}>
+            <div className="hook-label">FUTURE WORK</div>
+            <h2>What's Next</h2>
+            <ul className="future-work-list">
+              <li><span className="fw-num">01</span>Multi-path LoRa routing with per-link RSSI-aware relay selection</li>
+              <li><span className="fw-num">02</span>iOS companion app — CoreBluetooth peripheral & central roles</li>
+              <li><span className="fw-num">03</span>Solar-powered autonomous relay node enclosure</li>
+              <li><span className="fw-num">04</span>Group messaging & broadcast channel support</li>
+              <li><span className="fw-num">05</span>Adaptive spreading factor tuning based on link quality</li>
+            </ul>
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 21: Any Questions ── */}
+        <SectionFrame id="hook-questions" isActive={currentSectionIndex === 21}>
+          <div className={`hook-inner transition-inner intro-content ${dir}`}>
+            <div className="hook-label">Q &amp; A</div>
+            <h2 style={{ fontSize: 'clamp(2.4rem, 6vw, 5rem)', letterSpacing: '-0.02em' }}>Any Questions?</h2>
+            <p className="hook-subline" style={{ marginTop: 16 }}>Mohamed Hakam · Peer Reach</p>
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 22: Enter System ── */}
+        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 22}>
           <div className={`hook-inner transition-inner intro-content ${dir}`}>
             <h2>Peer Reach</h2>
             <p className="hook-subline">A working prototype. A real mesh. Let's show you how it works.</p>
