@@ -120,6 +120,7 @@ function MDRChart({ active }: { active: boolean }) {
     { label: '20 m',       mdr: 100,  ack: 40.6, sent: 50, deliv: 50, coldStarts: 2  },
     { label: '30 m',       mdr: 86.7, ack: 16.7, sent: 50, deliv: 42, coldStarts: 11 },
     { label: '50 m',       mdr: 70,   ack: 3,    sent: 50, deliv: 35, coldStarts: 0  },
+    { label: '100 m',      mdr: 50,   ack: 0,    sent: 50, deliv: 25, coldStarts: 0,  ackNA: true },
   ];
 
   const W = 860, H = 300, PL = 48, PR = 16, PT = 32, PB = 48;
@@ -225,14 +226,13 @@ function ACKCDFChart({ active }: { active: boolean }) {
     [2480,0.90],[2700,0.92],[3000,0.94],[3500,0.97],[4000,0.985],[4500,1.0],
   ];
 
-  // Per-session lines — pink so they're visible in a presentation
-  const PINK = '#f472b6';
-  const sessions: { pts: [number, number][]; col: string; op: number }[] = [
-    { pts:[[0,0],[200,0.05],[400,0.22],[600,0.5],[800,0.68],[1000,0.82],[1300,0.93],[1800,0.99],[2200,1.0]], col:PINK, op:0.6 },
-    { pts:[[0,0],[300,0.04],[600,0.28],[900,0.54],[1200,0.72],[1600,0.86],[2200,0.95],[3000,0.99],[3500,1.0]], col:PINK, op:0.45 },
-    { pts:[[0,0],[400,0.03],[700,0.14],[1000,0.34],[1400,0.57],[1800,0.72],[2200,0.82],[2800,0.9],[3500,0.97],[4500,1.0]], col:PINK, op:0.38 },
-    { pts:[[0,0],[600,0.04],[1000,0.1],[1500,0.27],[2000,0.51],[2500,0.71],[3000,0.85],[3800,0.95],[4500,1.0]], col:PINK, op:0.5 },
-    { pts:[[0,0],[500,0.14],[800,0.44],[1100,0.67],[1400,0.81],[1800,0.91],[2500,0.97],[3200,1.0]], col:PINK, op:0.42 },
+  // Per-session lines — each a distinct visible colour; aggregate stays blue
+  const sessions: { pts: [number, number][]; col: string; op: number; label: string }[] = [
+    { pts:[[0,0],[200,0.05],[400,0.22],[600,0.5],[800,0.68],[1000,0.82],[1300,0.93],[1800,0.99],[2200,1.0]],   col:'#f59e0b', op:0.80, label:'1 cm'    },
+    { pts:[[0,0],[300,0.04],[600,0.28],[900,0.54],[1200,0.72],[1600,0.86],[2200,0.95],[3000,0.99],[3500,1.0]],  col:'#22c55e', op:0.75, label:'short'   },
+    { pts:[[0,0],[400,0.03],[700,0.14],[1000,0.34],[1400,0.57],[1800,0.72],[2200,0.82],[2800,0.9],[3500,0.97],[4500,1.0]], col:'#f472b6', op:0.72, label:'mid' },
+    { pts:[[0,0],[600,0.04],[1000,0.1],[1500,0.27],[2000,0.51],[2500,0.71],[3000,0.85],[3800,0.95],[4500,1.0]], col:'#fb923c', op:0.78, label:'far'    },
+    { pts:[[0,0],[500,0.14],[800,0.44],[1100,0.67],[1400,0.81],[1800,0.91],[2500,0.97],[3200,1.0]],             col:'#a78bfa', op:0.75, label:'wall'   },
   ];
 
   const xTicks = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500];
@@ -321,7 +321,11 @@ function ACKCDFChart({ active }: { active: boolean }) {
         <line x1={W - 190} y1={PT + 14} x2={W - 168} y2={PT + 14} stroke="#1e40af" strokeWidth="2.5" />
         <line x1={W - 190} y1={PT + 14} x2={W - 168} y2={PT + 14} stroke="#60a5fa" strokeWidth="1.4" />
         <text x={W - 163} y={PT + 18} fill="var(--intro-text-dim)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Aggregate (all sessions)</text>
-        <line x1={W - 190} y1={PT + 28} x2={W - 168} y2={PT + 28} stroke="#f472b6" strokeWidth="1.4" opacity="0.6" />
+        {/* Mini swatches for per-session colours */}
+        {['#f59e0b','#22c55e','#f472b6','#fb923c','#a78bfa'].map((c, i) => (
+          <line key={c} x1={W - 190 + i * 5} y1={PT + 28} x2={W - 186 + i * 5} y2={PT + 28}
+            stroke={c} strokeWidth="2.5" opacity="0.85" />
+        ))}
         <text x={W - 163} y={PT + 32} fill="var(--intro-text-faint)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Per-distance sessions</text>
       </svg>
       <p style={{ textAlign:'center', fontSize:12, color:'var(--intro-text-muted)', fontFamily:'var(--font-mono,monospace)', marginTop:8 }}>
