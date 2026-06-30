@@ -1485,33 +1485,111 @@ function ImageLightbox({ image, onClose }: { image: ResultImage; onClose: () => 
   );
 }
 
-// ─── Slide 16: Key Results (image gallery) ───────────────────────────────────
+// ─── Slide: LoRa Field Tests ─────────────────────────────────────────────────
 function NumbersSlide({ visibleCount }: { visibleCount: number }) {
   const [selectedImage, setSelectedImage] = useState<ResultImage | null>(null);
 
+  const tests = [
+    {
+      img: '/results/distance-measurement-1.png',
+      id: 'lora-range-1',
+      tag: 'TEST 01',
+      title: 'Cairo University',
+      city: 'Giza, Egypt',
+      color: CYAN,
+      distance: '801.45 m',
+      heading: '107.91°',
+      direction: 'East',
+      elevation: '17.5 m → 21.2 m',
+      terrain: 'Dense urban — multi-storey buildings, Cairo metro area',
+      result: 'Message delivered · no relay drop',
+      note: 'Signal navigated through a densely built urban grid with elevation variance of ~3.7 m',
+    },
+    {
+      img: '/results/distance-measurement-2.png',
+      id: 'lora-range-2',
+      tag: 'TEST 02',
+      title: '6th of October City',
+      city: 'Giza Governorate, Egypt',
+      color: PURPLE,
+      distance: '1,591.82 m',
+      heading: '17.95°',
+      direction: 'North-NNE',
+      elevation: '127.4 m → 160.4 m',
+      terrain: 'Open desert — sparse residential, no obstructions',
+      result: 'Message delivered · furthest verified link',
+      note: 'Sender at 160 m elevation, receiver at 127 m — 33 m drop helped line-of-sight propagation',
+    },
+  ];
+
   return (
-    <div className="numbers-grid-wrap">
-      <div className="results-gallery">
-        {RESULT_IMAGES.map((img, i) => (
-          <button
-            key={img.id}
-            className={`results-card ${visibleCount > i ? 'is-visible' : ''}`}
-            onClick={() => setSelectedImage(img)}
-            style={{ '--ng-delay': `${i * 160}ms` } as React.CSSProperties}
-            aria-label={`View ${img.title}`}
+    <div className="lft-wrap">
+      <div className="lft-cards">
+        {tests.map((t, i) => (
+          <div
+            key={t.id}
+            className={`lft-card ${visibleCount > i ? 'is-visible' : ''}`}
+            style={{ '--lft-delay': `${i * 160}ms` } as React.CSSProperties}
           >
-            <div className="results-card-image">
-              <img src={img.path} alt={img.title} loading="lazy" />
-              <div className="results-card-overlay">
-                <span className="results-expand-icon">↗</span>
+            {/* Map screenshot — clickable */}
+            <button
+              className="lft-img-btn"
+              onClick={() => setSelectedImage({ id: t.id, path: t.img, title: t.title, caption: t.note })}
+              aria-label={`Expand map for ${t.title}`}
+            >
+              <img src={t.img} alt={t.title} loading="lazy" />
+              <div className="lft-img-overlay"><span>↗ expand</span></div>
+            </button>
+
+            {/* Info panel */}
+            <div className="lft-info">
+              <div className="lft-tag" style={{ color: t.color, borderColor: t.color }}>{t.tag}</div>
+              <div className="lft-title">{t.title}</div>
+              <div className="lft-city">{t.city}</div>
+
+              <div className="lft-stats">
+                <div className="lft-stat-big">
+                  <span className="lft-stat-val" style={{ color: t.color }}>{t.distance}</span>
+                  <span className="lft-stat-key">link distance</span>
+                </div>
+                <div className="lft-stat-row"><span>Heading</span><strong>{t.heading} {t.direction}</strong></div>
+                <div className="lft-stat-row"><span>Elevation</span><strong>{t.elevation}</strong></div>
+                <div className="lft-stat-row"><span>Terrain</span><strong>{t.terrain}</strong></div>
+              </div>
+
+              <p className="lft-note">{t.note}</p>
+
+              <div className="lft-badge" style={{ color: t.color, borderColor: t.color }}>
+                ✓ {t.result}
               </div>
             </div>
-            <div className="results-card-label">{img.title}</div>
-          </button>
+          </div>
         ))}
       </div>
 
-      {/* This renders the lightbox directly at the bottom of <body> */}
+      {/* Bottom summary bar */}
+      <div className={`lft-summary ${visibleCount > 0 ? 'is-visible' : ''}`}>
+        <div className="lft-sum-item">
+          <span className="lft-sum-val" style={{ color: CYAN }}>868 MHz</span>
+          <span className="lft-sum-key">LoRa frequency band</span>
+        </div>
+        <div className="lft-sum-divider" />
+        <div className="lft-sum-item">
+          <span className="lft-sum-val" style={{ color: GOLD }}>SF10 · BW125</span>
+          <span className="lft-sum-key">spreading factor · bandwidth</span>
+        </div>
+        <div className="lft-sum-divider" />
+        <div className="lft-sum-item">
+          <span className="lft-sum-val" style={{ color: GREEN }}>2 / 2</span>
+          <span className="lft-sum-key">tests passed</span>
+        </div>
+        <div className="lft-sum-divider" />
+        <div className="lft-sum-item">
+          <span className="lft-sum-val" style={{ color: PURPLE }}>1,591 m</span>
+          <span className="lft-sum-key">max verified range</span>
+        </div>
+      </div>
+
       {selectedImage && createPortal(
         <ImageLightbox image={selectedImage} onClose={() => setSelectedImage(null)} />,
         document.body
@@ -2416,10 +2494,11 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 16: Lora ── */}
+        {/* ── LoRa Field Tests ── */}
         <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 16}>
-          <div className={`hook-inner hook-numbers intro-content ${dir}`}>
-            <h2>Lora</h2>
+          <div className={`hook-inner hook-numbers intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
+            <div className="hook-label">EXPERIMENTAL RESULTS</div>
+            <h2>LoRa Field Tests</h2>
             <NumbersSlide visibleCount={visibleNumberCount} />
           </div>
         </SectionFrame>
