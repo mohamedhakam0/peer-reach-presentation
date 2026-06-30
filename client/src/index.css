@@ -3226,6 +3226,14 @@ input[type="range"]::-moz-range-thumb {
   width: fit-content;
   margin-top: 4px;
 }
+.lft-video-btn {
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  padding: 7px 16px;
+  font-size: 12px;
+}
+.lft-video-btn:hover { opacity: 0.75; }
 
 /* Summary bar */
 .lft-summary {

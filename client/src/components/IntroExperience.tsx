@@ -197,33 +197,6 @@ function MDRChart({ active }: { active: boolean }) {
         <text x={W - 116} y={PT + 13} fill="var(--intro-text-dim)" fontSize="9" fontFamily="var(--font-mono,monospace)">ACK-MDR</text>
       </svg>
 
-      {/* Data table */}
-      <div className="mdr-table-wrap">
-        <table className="mdr-table">
-          <thead>
-            <tr>
-              <th>Distance</th>
-              <th>Sent</th>
-              <th>Delivered</th>
-              <th style={{ color: 'var(--intro-cyan)' }}>MDR (%)</th>
-              <th style={{ color: 'var(--intro-gold)' }}>ACK-MDR (%)</th>
-              <th>Cold Starts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bars.map((b, i) => (
-              <tr key={i} className={b.wall ? 'mdr-row-wall' : b.manual ? 'mdr-row-manual' : ''}>
-                <td>{b.label}{b.wall ? ' (wall)' : b.manual ? ' (manual)' : ''}</td>
-                <td>{b.sent}</td>
-                <td>{b.deliv}</td>
-                <td style={{ color: 'var(--intro-cyan)', fontWeight: 600 }}>{b.mdr}</td>
-                <td style={{ color: 'var(--intro-gold)', fontWeight: 600 }}>{b.ack}</td>
-                <td>{b.coldStarts}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }
@@ -1513,38 +1486,34 @@ function ImageLightbox({ image, onClose }: { image: ResultImage; onClose: () => 
 
 // ─── Slide: LoRa Field Tests ─────────────────────────────────────────────────
 function NumbersSlide({ visibleCount }: { visibleCount: number }) {
-  const [selectedImage, setSelectedImage] = useState<ResultImage | null>(null);
-
   const tests = [
     {
-      img: '/results/distance-measurement-1.png',
+      // distance-measurement-2 is the Giza/Cairo University photo
+      img: '/results/distance-measurement-2.png',
       id: 'lora-range-1',
       tag: 'TEST 01',
       title: 'Cairo University',
-      city: 'Giza, Egypt',
       color: CYAN,
       distance: '801.45 m',
       heading: '107.91°',
       direction: 'East',
       elevation: '17.5 m → 21.2 m',
       terrain: 'Dense urban — multi-storey buildings, Cairo metro area',
-      result: 'Message delivered · no relay drop',
-      note: 'Signal navigated through a densely built urban grid with elevation variance of ~3.7 m',
+      videoUrl: 'https://drive.google.com/file/d/1Y9CLHKlZEnAWVCQwvIBqjvmyjQw2i61i/view?usp=drive_link',
     },
     {
-      img: '/results/distance-measurement-2.png',
+      // distance-measurement-1 is the October City photo
+      img: '/results/distance-measurement-1.png',
       id: 'lora-range-2',
       tag: 'TEST 02',
       title: '6th of October City',
-      city: 'Giza Governorate, Egypt',
       color: PURPLE,
       distance: '1,591.82 m',
       heading: '17.95°',
       direction: 'North-NNE',
       elevation: '127.4 m → 160.4 m',
       terrain: 'Open desert — sparse residential, no obstructions',
-      result: 'Message delivered · furthest verified link',
-      note: 'Sender at 160 m elevation, receiver at 127 m — 33 m drop helped line-of-sight propagation',
+      videoUrl: 'https://drive.google.com/file/d/1oxfSqgMKsRGhxQCf8TUCqiI7Z0_oxkM3/view?usp=drive_link',
     },
   ];
 
@@ -1557,21 +1526,15 @@ function NumbersSlide({ visibleCount }: { visibleCount: number }) {
             className={`lft-card ${visibleCount > i ? 'is-visible' : ''}`}
             style={{ '--lft-delay': `${i * 160}ms` } as React.CSSProperties}
           >
-            {/* Map screenshot — clickable */}
-            <button
-              className="lft-img-btn"
-              onClick={() => setSelectedImage({ id: t.id, path: t.img, title: t.title, caption: t.note })}
-              aria-label={`Expand map for ${t.title}`}
-            >
+            {/* Map screenshot */}
+            <div className="lft-img-btn" style={{ cursor: 'default' }}>
               <img src={t.img} alt={t.title} loading="lazy" />
-              <div className="lft-img-overlay"><span>↗ expand</span></div>
-            </button>
+            </div>
 
             {/* Info panel */}
             <div className="lft-info">
               <div className="lft-tag" style={{ color: t.color, borderColor: t.color }}>{t.tag}</div>
               <div className="lft-title">{t.title}</div>
-              <div className="lft-city">{t.city}</div>
 
               <div className="lft-stats">
                 <div className="lft-stat-big">
@@ -1583,43 +1546,19 @@ function NumbersSlide({ visibleCount }: { visibleCount: number }) {
                 <div className="lft-stat-row"><span>Terrain</span><strong>{t.terrain}</strong></div>
               </div>
 
-              <p className="lft-note">{t.note}</p>
-
-              <div className="lft-badge" style={{ color: t.color, borderColor: t.color }}>
-                ✓ {t.result}
-              </div>
+              <a
+                href={t.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lft-badge lft-video-btn"
+                style={{ color: t.color, borderColor: t.color }}
+              >
+                ▶ Click to view video
+              </a>
             </div>
           </div>
         ))}
       </div>
-
-      {/* Bottom summary bar */}
-      <div className={`lft-summary ${visibleCount > 0 ? 'is-visible' : ''}`}>
-        <div className="lft-sum-item">
-          <span className="lft-sum-val" style={{ color: CYAN }}>868 MHz</span>
-          <span className="lft-sum-key">LoRa frequency band</span>
-        </div>
-        <div className="lft-sum-divider" />
-        <div className="lft-sum-item">
-          <span className="lft-sum-val" style={{ color: GOLD }}>SF10 · BW125</span>
-          <span className="lft-sum-key">spreading factor · bandwidth</span>
-        </div>
-        <div className="lft-sum-divider" />
-        <div className="lft-sum-item">
-          <span className="lft-sum-val" style={{ color: GREEN }}>2 / 2</span>
-          <span className="lft-sum-key">tests passed</span>
-        </div>
-        <div className="lft-sum-divider" />
-        <div className="lft-sum-item">
-          <span className="lft-sum-val" style={{ color: PURPLE }}>1,591 m</span>
-          <span className="lft-sum-key">max verified range</span>
-        </div>
-      </div>
-
-      {selectedImage && createPortal(
-        <ImageLightbox image={selectedImage} onClose={() => setSelectedImage(null)} />,
-        document.body
-      )}
     </div>
   );
 }
