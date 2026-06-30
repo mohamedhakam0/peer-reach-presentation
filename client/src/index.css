@@ -2222,7 +2222,8 @@ input[type="range"]::-moz-range-thumb {
 .sec-deep-note {
   margin: 20px 0;
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 10px;
+  font-weight: 600;
+  font-size: 15px;
   letter-spacing: 0.06em;
   color: var(--intro-text-faint);
   text-align: center;

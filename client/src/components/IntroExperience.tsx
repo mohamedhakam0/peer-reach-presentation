@@ -70,7 +70,6 @@ const INTRO_SECTION_IDS = [
   'hook-demo',                // 9
   'hook-packet',              // 10
   'hook-flooding',            // 11
-  'hook-security',            // 12
   'hook-security-framework',            // 13
   'hook-security-deep',       // 13
   'hook-security-scenarios',  // 14
@@ -1705,7 +1704,7 @@ function SecurityDeepDiveAnimation({ replayKey }: { replayKey: number }) {
         </div>
       </div>
 
-      <p className="sec-deep-note">Traffic analysis (timing / frequency correlation) is not protected — explicit design boundary of this thesis.</p>
+      <p className="sec-deep-note">What a compromised relay CAN see</p>
     </div>
   );
 }
@@ -2234,7 +2233,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
 
   // Numbers (index 15 = hook-numbers)
   useEffect(() => {
-    if (currentSectionIndex !== 17) { setVisibleNumberCount(0); return; }
+    if (currentSectionIndex !== 16) { setVisibleNumberCount(0); return; }
     setVisibleNumberCount(0);
     const ts = [120, 280, 440, 600, 760, 920].map((ms, i) =>
       window.setTimeout(() => setVisibleNumberCount(i + 1), ms)
@@ -2242,18 +2241,13 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
     return () => ts.forEach(t => window.clearTimeout(t));
   }, [currentSectionIndex]);
   useEffect(() => {
-    if (currentSectionIndex !== 19) { setVisibleNumberCount2(0); return; }
+    if (currentSectionIndex !== 18) { setVisibleNumberCount2(0); return; }
     setVisibleNumberCount2(0);
     const ts = [120, 280, 440, 600, 760, 920].map((ms, i) =>
       window.setTimeout(() => setVisibleNumberCount2(i + 1), ms)
     );
     return () => ts.forEach(t => window.clearTimeout(t));
   }, [currentSectionIndex]);
-  // Security overview (index 12 = hook-security)
-  useEffect(() => {
-    if (currentSectionIndex === 12) setCryptoReplayKey(k => k + 1);
-  }, [currentSectionIndex]);
-
   // Security deep dive (index 14 = hook-security-deep)
   useEffect(() => {
     if (currentSectionIndex === 14) setSecDeepReplayKey(k => k + 1);
@@ -2282,7 +2276,6 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
 
   return (
     <div className="intro-shell">
-      <ThemeToggle />
       <SlideNumber current={currentSectionIndex} />
       <div ref={scrollerRef} className="intro-scroll-root">
 
@@ -2392,24 +2385,15 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 13: Security Overview ── */}
-        <SectionFrame id="hook-security" isActive={currentSectionIndex === 12}>
-          <div className={`hook-inner intro-content ${dir}`}>
-            <h2>Security Design</h2>
-            <p className="hook-subline">End-to-end encryption via Curve25519 ECDH + AES-128-GCM with out-of-band QR key exchange.</p>
-            <EncryptionFlowAnimation replayKey={cryptoReplayKey} />
-          </div>
-        </SectionFrame>
-
         {/* ── Slide 12: Security Framework ── */}
-        <SectionFrame id="hook-security-framework" isActive={currentSectionIndex === 13}>
+        <SectionFrame id="hook-security-framework" isActive={currentSectionIndex === 12}>
           <div className={`hook-inner intro-content ${dir}`}>
-            <SecurityFrameworkSlide visible={currentSectionIndex === 13} />
+            <SecurityFrameworkSlide visible={currentSectionIndex === 12} />
           </div>
         </SectionFrame>
 
         {/* ── Slide 15: Threat Model ── */}
-        <SectionFrame id="hook-security-deep" isActive={currentSectionIndex === 14}>
+        <SectionFrame id="hook-security-deep" isActive={currentSectionIndex === 13}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
             <h2>Threat Model</h2>
             <SecurityDeepDiveAnimation replayKey={secDeepReplayKey} />
@@ -2417,7 +2401,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         </SectionFrame>
 
         {/* ── Slide 14: Security Scenarios ── */}
-        <SectionFrame id="hook-security-scenarios" isActive={currentSectionIndex === 15}>
+        <SectionFrame id="hook-security-scenarios" isActive={currentSectionIndex === 14}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
             <h2>Attack Scenarios</h2>
             <SecurityScenariosSlide />
@@ -2425,7 +2409,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         </SectionFrame>
 
         {/* ── Slide 17: MDR vs Distance ── */}
-        <SectionFrame id="hook-results-mdr" isActive={currentSectionIndex === 16}>
+        <SectionFrame id="hook-results-mdr" isActive={currentSectionIndex === 15}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(900px, 100%)' }}>
             <h2>MDR vs Distance</h2>
             <MDRChart active={currentSectionIndex === 17} />
@@ -2433,7 +2417,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         </SectionFrame>
 
         {/* ── Slide 16: Lora ── */}
-        <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 17}>
+        <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 16}>
           <div className={`hook-inner hook-numbers intro-content ${dir}`}>
             <h2>Lora</h2>
             <NumbersSlide visibleCount={visibleNumberCount} />
@@ -2441,7 +2425,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         </SectionFrame>
 
         {/* ── Slide 20: ACK RTT CDF ── */}
-        <SectionFrame id="hook-results-cdf" isActive={currentSectionIndex === 18}>
+        <SectionFrame id="hook-results-cdf" isActive={currentSectionIndex === 17}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(900px, 100%)' }}>
             <h2>ACK Round-Trip Time</h2>
             <ACKCDFChart active={currentSectionIndex === 20} />
@@ -2449,7 +2433,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         </SectionFrame>
 
         {/* ── Slide 16: Key Results ── */}
-        <SectionFrame id="hook-numbers-conc" isActive={currentSectionIndex === 19}>
+        <SectionFrame id="hook-numbers-conc" isActive={currentSectionIndex === 18}>
           <div className={`hook-inner hook-numbers-conc intro-content ${dir}`}>
             <h2>Key Results</h2>
             <NumbersConc visibleCount={visibleNumberCount2} />
@@ -2457,7 +2441,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         </SectionFrame>
 
         {/* ── Slide 17: Comparison ── */}
-        <SectionFrame id="hook-related" isActive={currentSectionIndex === 20}>
+        <SectionFrame id="hook-related" isActive={currentSectionIndex === 19}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1100px, 100%)' }}>
             <h2>Comparison</h2>
             <RelatedWorkTable visible={showRelatedTable} />
@@ -2465,7 +2449,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         </SectionFrame>
 
         {/* ── Slide 18: Closing / Enter System ── */}
-        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 21}>
+        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 20}>
           <div className={`hook-inner transition-inner intro-content ${dir}`}>
             <h2>Peer Reach</h2>
             <p className="hook-subline">A working prototype. A real mesh. Let's show you how it works.</p>
