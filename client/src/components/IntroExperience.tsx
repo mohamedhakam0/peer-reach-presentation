@@ -75,10 +75,11 @@ const INTRO_SECTION_IDS = [
   'hook-security-scenarios',  // 14
   'hook-results-mdr',         // 17 — NEW: MDR vs distance bar chart     
   'hook-numbers',             // 15
-  'hook-results-cdf',
-  'hook-numbers-conc',             // 15
-  'hook-related',             // 16
-  'hook-transition',          // 17
+  'hook-results-cdf',         // 17
+  'hook-results-range',       // 18 — BLE vs LoRa range circles
+  'hook-numbers-conc',        // 19
+  'hook-related',             // 20
+  'hook-transition',          // 21
 ] as const;
 
 const TOTAL_SLIDES = INTRO_SECTION_IDS.length;
@@ -1484,6 +1485,98 @@ function ImageLightbox({ image, onClose }: { image: ResultImage; onClose: () => 
   );
 }
 
+// ─── Slide 18: BLE vs LoRa range circles ─────────────────────────────────────
+function RangeCircles({ active }: { active: boolean }) {
+  const W = 760, H = 380;
+  const cx = W / 2, cy = H / 2 + 16;
+  const bleR = 22;
+  const loraR = 168;
+
+  // Arrow: top-left quadrant (just outside BLE) → bottom-right (near LoRa edge)
+  const ax1 = cx - loraR * 0.62, ay1 = cy - loraR * 0.58;
+  const ax2 = cx + loraR * 0.62, ay2 = cy + loraR * 0.52;
+
+  return (
+    <div className={`res-chart-wrap range-circles-wrap ${active ? 'is-active' : ''}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxHeight: 380 }}>
+        <defs>
+          <marker id="rc-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="var(--intro-text-muted)" />
+          </marker>
+          <radialGradient id="lora-fill" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#c084fc" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#c084fc" stopOpacity="0.03" />
+          </radialGradient>
+          <radialGradient id="ble-fill" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#00bcd4" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#00bcd4" stopOpacity="0.06" />
+          </radialGradient>
+        </defs>
+
+        {/* Faint scale rings inside LoRa */}
+        {[0.33, 0.66].map((f, i) => (
+          <circle key={i} cx={cx} cy={cy} r={loraR * f}
+            fill="none" stroke={PURPLE} strokeWidth="0.5" strokeDasharray="2 6" opacity="0.18" />
+        ))}
+
+        {/* LoRa circle */}
+        <circle cx={cx} cy={cy} r={loraR} fill="url(#lora-fill)" stroke={PURPLE}
+          strokeWidth="1.6" strokeDasharray="7 4" opacity="0.8" />
+
+        {/* BLE circle */}
+        <circle cx={cx} cy={cy} r={bleR} fill="url(#ble-fill)" stroke={CYAN} strokeWidth="1.8" />
+
+        {/* Centre dot */}
+        <circle cx={cx} cy={cy} r={4} fill={CYAN} />
+
+        {/* Diagonal arrow: top-left → bottom-right */}
+        <line x1={ax1} y1={ay1} x2={ax2} y2={ay2}
+          stroke="var(--intro-text-muted)" strokeWidth="1.2"
+          strokeDasharray="6 4" markerEnd="url(#rc-arr)" opacity="0.6" />
+        {/* Arrow label */}
+        <text
+          x={(ax1 + ax2) / 2 - 10} y={(ay1 + ay2) / 2 - 10}
+          textAnchor="middle" fill="var(--intro-text-muted)"
+          fontSize="9.5" fontFamily="var(--font-mono,monospace)"
+          transform={`rotate(${Math.atan2(ay2 - ay1, ax2 - ax1) * 180 / Math.PI}, ${(ax1 + ax2) / 2 - 10}, ${(ay1 + ay2) / 2 - 10})`}
+        >range increase</text>
+
+        {/* BLE label */}
+        <text x={cx} y={cy - bleR - 8} textAnchor="middle"
+          fill={CYAN} fontSize="10.5" fontFamily="var(--font-mono,monospace)" fontWeight="600">BLE Direct</text>
+        <text x={cx} y={cy - bleR + 4} textAnchor="middle"
+          fill={CYAN} fontSize="9" fontFamily="var(--font-mono,monospace)" opacity="0.65">~30 m radius</text>
+
+        {/* LoRa label — top */}
+        <text x={cx} y={cy - loraR - 10} textAnchor="middle"
+          fill={PURPLE} fontSize="11" fontFamily="var(--font-mono,monospace)" fontWeight="600" opacity="0.9">
+          Peer Reach via LoRa
+        </text>
+        <text x={cx} y={cy - loraR + 3} textAnchor="middle"
+          fill={PURPLE} fontSize="9.5" fontFamily="var(--font-mono,monospace)" opacity="0.6">
+          ~1,500 m radius · field-verified 1,591 m
+        </text>
+
+        {/* BLE radius callout line */}
+        <line x1={cx} y1={cy} x2={cx + bleR} y2={cy}
+          stroke={CYAN} strokeWidth="0.8" strokeDasharray="3 2" opacity="0.5" />
+        <text x={cx + bleR / 2} y={cy - 4} textAnchor="middle"
+          fill={CYAN} fontSize="7.5" fontFamily="var(--font-mono,monospace)" opacity="0.7">30 m</text>
+
+        {/* LoRa radius callout line (horizontal right) */}
+        <line x1={cx} y1={cy + 22} x2={cx + loraR} y2={cy + 22}
+          stroke={PURPLE} strokeWidth="0.8" strokeDasharray="3 2" opacity="0.45" />
+        <text x={cx + loraR / 2} y={cy + 34} textAnchor="middle"
+          fill={PURPLE} fontSize="8" fontFamily="var(--font-mono,monospace)" opacity="0.65">1,500 m</text>
+      </svg>
+
+      <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--intro-text-muted)', fontFamily: 'var(--font-mono,monospace)', marginTop: 4 }}>
+        LoRa bridge extends effective peer-to-peer range by ~50× — no infrastructure required
+      </p>
+    </div>
+  );
+}
+
 // ─── Slide: LoRa Field Tests ─────────────────────────────────────────────────
 function NumbersSlide({ visibleCount }: { visibleCount: number }) {
   const tests = [
@@ -2257,9 +2350,9 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
     return () => window.clearTimeout(t);
   }, [currentSectionIndex, showProblemList]);
 
-  // Related table (index 16 = hook-related)
+  // Related table (index 20 = hook-related)
   useEffect(() => {
-    if (currentSectionIndex !== 16) return;
+    if (currentSectionIndex !== 20) return;
     const t = window.setTimeout(() => setShowRelatedTable(true), 400);
     return () => window.clearTimeout(t);
   }, [currentSectionIndex]);
@@ -2274,17 +2367,18 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
     setPacketActive(currentSectionIndex === 10);
   }, [currentSectionIndex]);
 
-  // Numbers (index 15 = hook-numbers)
+  // Numbers (index 16 = hook-numbers / LoRa field tests)
   useEffect(() => {
     if (currentSectionIndex !== 16) { setVisibleNumberCount(0); return; }
     setVisibleNumberCount(0);
-    const ts = [120, 280, 440, 600, 760, 920].map((ms, i) =>
+    const ts = [120, 280].map((ms, i) =>
       window.setTimeout(() => setVisibleNumberCount(i + 1), ms)
     );
     return () => ts.forEach(t => window.clearTimeout(t));
   }, [currentSectionIndex]);
+  // Numbers conc (index 19 = hook-numbers-conc)
   useEffect(() => {
-    if (currentSectionIndex !== 18) { setVisibleNumberCount2(0); return; }
+    if (currentSectionIndex !== 19) { setVisibleNumberCount2(0); return; }
     setVisibleNumberCount2(0);
     const ts = [120, 280, 440, 600, 760, 920].map((ms, i) =>
       window.setTimeout(() => setVisibleNumberCount2(i + 1), ms)
@@ -2451,15 +2545,16 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 17: MDR vs Distance ── */}
+        {/* ── Slide 15: MDR vs Distance ── */}
         <SectionFrame id="hook-results-mdr" isActive={currentSectionIndex === 15}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(900px, 100%)' }}>
-            <h2>MDR vs Distance</h2>
-            <MDRChart active={currentSectionIndex === 17} />
+            <div className="hook-label">EXPERIMENTAL RESULTS</div>
+            <h2>Message Delivery Ratio vs Distance</h2>
+            <MDRChart active={currentSectionIndex === 15} />
           </div>
         </SectionFrame>
 
-        {/* ── LoRa Field Tests ── */}
+        {/* ── Slide 16: LoRa Field Tests ── */}
         <SectionFrame id="hook-numbers" isActive={currentSectionIndex === 16}>
           <div className={`hook-inner hook-numbers intro-content ${dir}`} style={{ width: 'min(1060px, 100%)' }}>
             <div className="hook-label">EXPERIMENTAL RESULTS</div>
@@ -2468,32 +2563,44 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
           </div>
         </SectionFrame>
 
-        {/* ── Slide 20: ACK RTT CDF ── */}
+        {/* ── Slide 17: ACK RTT CDF ── */}
         <SectionFrame id="hook-results-cdf" isActive={currentSectionIndex === 17}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(900px, 100%)' }}>
-            <h2>ACK Round-Trip Time</h2>
-            <ACKCDFChart active={currentSectionIndex === 20} />
+            <div className="hook-label">EXPERIMENTAL RESULTS</div>
+            <h2>ACK Round-Trip Time Distribution</h2>
+            <ACKCDFChart active={currentSectionIndex === 17} />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 16: Key Results ── */}
-        <SectionFrame id="hook-numbers-conc" isActive={currentSectionIndex === 18}>
+        {/* ── Slide 18: BLE vs LoRa Range ── */}
+        <SectionFrame id="hook-results-range" isActive={currentSectionIndex === 18}>
+          <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(860px, 100%)' }}>
+            <div className="hook-label">EXPERIMENTAL RESULTS</div>
+            <h2>Effective Range: BLE vs Peer Reach</h2>
+            <RangeCircles active={currentSectionIndex === 18} />
+          </div>
+        </SectionFrame>
+
+        {/* ── Slide 19: Key Results ── */}
+        <SectionFrame id="hook-numbers-conc" isActive={currentSectionIndex === 19}>
           <div className={`hook-inner hook-numbers-conc intro-content ${dir}`}>
+            <div className="hook-label">EXPERIMENTAL RESULTS</div>
             <h2>Key Results</h2>
             <NumbersConc visibleCount={visibleNumberCount2} />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 17: Comparison ── */}
-        <SectionFrame id="hook-related" isActive={currentSectionIndex === 19}>
+        {/* ── Slide 20: Comparison ── */}
+        <SectionFrame id="hook-related" isActive={currentSectionIndex === 20}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(1100px, 100%)' }}>
-            <h2>Comparison</h2>
+            <div className="hook-label">LITERATURE REVIEW</div>
+            <h2>Comparison with Existing Systems</h2>
             <RelatedWorkTable visible={showRelatedTable} />
           </div>
         </SectionFrame>
 
-        {/* ── Slide 18: Closing / Enter System ── */}
-        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 20}>
+        {/* ── Slide 21: Closing / Enter System ── */}
+        <SectionFrame id="hook-transition" isActive={currentSectionIndex === 21}>
           <div className={`hook-inner transition-inner intro-content ${dir}`}>
             <h2>Peer Reach</h2>
             <p className="hook-subline">A working prototype. A real mesh. Let's show you how it works.</p>
