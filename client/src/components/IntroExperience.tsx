@@ -119,6 +119,7 @@ function MDRChart({ active }: { active: boolean }) {
     { label: '15 m',       mdr: 100,  ack: 45,   sent: 50, deliv: 50, coldStarts: 0,  manual: true },
     { label: '20 m',       mdr: 100,  ack: 40.6, sent: 50, deliv: 50, coldStarts: 2  },
     { label: '30 m',       mdr: 86.7, ack: 16.7, sent: 50, deliv: 42, coldStarts: 11 },
+    { label: '50 m',       mdr: 70,   ack: 3,    sent: 50, deliv: 35, coldStarts: 0  },
   ];
 
   const W = 860, H = 300, PL = 48, PR = 16, PT = 32, PB = 48;
@@ -224,21 +225,34 @@ function ACKCDFChart({ active }: { active: boolean }) {
     [2480,0.90],[2700,0.92],[3000,0.94],[3500,0.97],[4000,0.985],[4500,1.0],
   ];
 
-  // Per-session lighter lines (approximated from Figure 8.2)
+  // Per-session lines — pink so they're visible in a presentation
+  const PINK = '#f472b6';
   const sessions: { pts: [number, number][]; col: string; op: number }[] = [
-    { pts:[[0,0],[200,0.05],[400,0.22],[600,0.5],[800,0.68],[1000,0.82],[1300,0.93],[1800,0.99],[2200,1.0]], col:'#93c5fd', op:0.5 },
-    { pts:[[0,0],[300,0.04],[600,0.28],[900,0.54],[1200,0.72],[1600,0.86],[2200,0.95],[3000,0.99],[3500,1.0]], col:'#94a3b8', op:0.4 },
-    { pts:[[0,0],[400,0.03],[700,0.14],[1000,0.34],[1400,0.57],[1800,0.72],[2200,0.82],[2800,0.9],[3500,0.97],[4500,1.0]], col:'#94a3b8', op:0.35 },
-    { pts:[[0,0],[600,0.04],[1000,0.1],[1500,0.27],[2000,0.51],[2500,0.71],[3000,0.85],[3800,0.95],[4500,1.0]], col:'#f59e0b', op:0.55 },
-    { pts:[[0,0],[500,0.14],[800,0.44],[1100,0.67],[1400,0.81],[1800,0.91],[2500,0.97],[3200,1.0]], col:'#93c5fd', op:0.35 },
+    { pts:[[0,0],[200,0.05],[400,0.22],[600,0.5],[800,0.68],[1000,0.82],[1300,0.93],[1800,0.99],[2200,1.0]], col:PINK, op:0.6 },
+    { pts:[[0,0],[300,0.04],[600,0.28],[900,0.54],[1200,0.72],[1600,0.86],[2200,0.95],[3000,0.99],[3500,1.0]], col:PINK, op:0.45 },
+    { pts:[[0,0],[400,0.03],[700,0.14],[1000,0.34],[1400,0.57],[1800,0.72],[2200,0.82],[2800,0.9],[3500,0.97],[4500,1.0]], col:PINK, op:0.38 },
+    { pts:[[0,0],[600,0.04],[1000,0.1],[1500,0.27],[2000,0.51],[2500,0.71],[3000,0.85],[3800,0.95],[4500,1.0]], col:PINK, op:0.5 },
+    { pts:[[0,0],[500,0.14],[800,0.44],[1100,0.67],[1400,0.81],[1800,0.91],[2500,0.97],[3200,1.0]], col:PINK, op:0.42 },
   ];
 
   const xTicks = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500];
   const yTicks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
 
+  // Arrow: top-left of chart area → bottom-right
+  const arrX1 = PL + chartW * 0.04, arrY1 = PT + chartH * 0.08;
+  const arrX2 = PL + chartW * 0.55, arrY2 = PT + chartH * 0.72;
+  const arrAngle = Math.atan2(arrY2 - arrY1, arrX2 - arrX1) * 180 / Math.PI;
+  const arrMidX = (arrX1 + arrX2) / 2, arrMidY = (arrY1 + arrY2) / 2;
+
   return (
     <div className={`res-chart-wrap ${active ? 'is-active' : ''}`}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', transform: 'scale(1.4)', marginTop: '45px' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%' }}>
+        <defs>
+          <marker id="cdf-arr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3 z" fill="var(--intro-text-muted)" opacity="0.65" />
+          </marker>
+        </defs>
+
         {/* Y grid + labels */}
         {yTicks.map(v => (
           <g key={v}>
@@ -265,12 +279,12 @@ function ACKCDFChart({ active }: { active: boolean }) {
         <text x={12} y={PT + chartH / 2} textAnchor="middle"
           fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)"
           transform={`rotate(-90,12,${PT + chartH / 2})`}>Cumulative probability</text>
-        <text x={PL + chartW / 2} y={H - 30} textAnchor="middle"
+        <text x={PL + chartW / 2} y={H - 6} textAnchor="middle"
           fill="var(--intro-text-muted)" fontSize="9.5" fontFamily="var(--font-mono,monospace)">ACK Round-Trip Time (ms)</text>
 
-        {/* Per-session lines */}
+        {/* Per-session lines (pink) */}
         {sessions.map((s, i) => (
-          <path key={i} d={pathD(s.pts)} fill="none" stroke={s.col} strokeWidth="1.2" opacity={s.op} />
+          <path key={i} d={pathD(s.pts)} fill="none" stroke={s.col} strokeWidth="1.4" opacity={s.op} />
         ))}
 
         {/* P50 dashed reference */}
@@ -291,17 +305,27 @@ function ACKCDFChart({ active }: { active: boolean }) {
 
         {/* Aggregate bold line */}
         <path d={pathD(agg)} fill="none" stroke="#1e40af" strokeWidth="2.8" opacity="0.9" />
-        <path d={pathD(agg)} fill="none" stroke="#60a5fa" strokeWidth="1.6" opacity="0.7" />
+        <path d={pathD(agg)} fill="none" stroke="#60a5fa" strokeWidth="1.6" opacity="0.75" />
+
+        {/* Diagonal arrow: distance increases → curves shift right */}
+        <line x1={arrX1} y1={arrY1} x2={arrX2} y2={arrY2}
+          stroke="var(--intro-text-muted)" strokeWidth="1.1"
+          strokeDasharray="5 3" markerEnd="url(#cdf-arr)" opacity="0.6" />
+        <text
+          x={arrMidX} y={arrMidY - 8} textAnchor="middle"
+          fill="var(--intro-text-muted)" fontSize="8.5" fontFamily="var(--font-mono,monospace)" opacity="0.7"
+          transform={`rotate(${arrAngle}, ${arrMidX}, ${arrMidY - 8})`}
+        >distance increases</text>
 
         {/* Legend */}
-        <line x1={W - 170} y1={PT + 14} x2={W - 148} y2={PT + 14} stroke="#1e40af" strokeWidth="2.5" />
-        <line x1={W - 170} y1={PT + 14} x2={W - 148} y2={PT + 14} stroke="#60a5fa" strokeWidth="1.4" />
-        <text x={W - 143} y={PT + 18} fill="var(--intro-text-dim)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Aggregate (all sessions)</text>
-        <line x1={W - 170} y1={PT + 28} x2={W - 148} y2={PT + 28} stroke="#94a3b8" strokeWidth="1.2" opacity="0.5" />
-        <text x={W - 143} y={PT + 32} fill="var(--intro-text-faint)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Per-distance sessions</text>
+        <line x1={W - 190} y1={PT + 14} x2={W - 168} y2={PT + 14} stroke="#1e40af" strokeWidth="2.5" />
+        <line x1={W - 190} y1={PT + 14} x2={W - 168} y2={PT + 14} stroke="#60a5fa" strokeWidth="1.4" />
+        <text x={W - 163} y={PT + 18} fill="var(--intro-text-dim)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Aggregate (all sessions)</text>
+        <line x1={W - 190} y1={PT + 28} x2={W - 168} y2={PT + 28} stroke="#f472b6" strokeWidth="1.4" opacity="0.6" />
+        <text x={W - 163} y={PT + 32} fill="var(--intro-text-faint)" fontSize="8.5" fontFamily="var(--font-mono,monospace)">Per-distance sessions</text>
       </svg>
-      <p style={{ textAlign:'center', fontSize:15, color:'var(--intro-text-muted)', fontFamily:'var(--font-mono,monospace)', marginTop:35 }}>
-        <br/>P50 latency 849 ms · P90 latency 2480 ms · outliers at 10 m attributed to advertising channel saturation
+      <p style={{ textAlign:'center', fontSize:12, color:'var(--intro-text-muted)', fontFamily:'var(--font-mono,monospace)', marginTop:8 }}>
+        Half of ACK replies arrive within 849 ms · 90% arrive within 2480 ms
       </p>
     </div>
   );
