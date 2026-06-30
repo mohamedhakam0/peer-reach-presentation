@@ -1617,7 +1617,8 @@ function NumbersSlide({ visibleCount }: { visibleCount: number }) {
       tag: 'TEST 01',
       title: 'Cairo University',
       color: CYAN,
-      distance: '801.45 m',
+      distance: '801 m',
+      mdr: '80%',
       heading: '107.91°',
       direction: 'East',
       elevation: '17.5 m → 21.2 m',
@@ -1631,7 +1632,8 @@ function NumbersSlide({ visibleCount }: { visibleCount: number }) {
       tag: 'TEST 02',
       title: '6th of October City',
       color: PURPLE,
-      distance: '1,591.82 m',
+      distance: '1,591 m',
+      mdr: '100%',
       heading: '17.95°',
       direction: 'North-NNE',
       elevation: '127.4 m → 160.4 m',
@@ -1663,6 +1665,10 @@ function NumbersSlide({ visibleCount }: { visibleCount: number }) {
                 <div className="lft-stat-big">
                   <span className="lft-stat-val" style={{ color: t.color }}>{t.distance}</span>
                   <span className="lft-stat-key">link distance</span>
+                </div>
+                <div className="lft-stat-row">
+                  <span>MDR</span>
+                  <strong style={{ color: t.color, fontSize: 14 }}>{t.mdr}</strong>
                 </div>
                 <div className="lft-stat-row"><span>Heading</span><strong>{t.heading} {t.direction}</strong></div>
                 <div className="lft-stat-row"><span>Elevation</span><strong>{t.elevation}</strong></div>
@@ -1765,9 +1771,7 @@ function EncryptionFlowAnimation({ replayKey }: { replayKey: number }) {
           <path d="M820 54l17 11 17-11" stroke="#0f121a" strokeWidth="1.5" fill="none" />
         </g>
       </svg>
-      <div className="crypto-lines">
-        <p className="line1">QR key exchange — keys never cross the mesh</p>
-      </div>
+      <div className="crypto-lines" />
     </div>
   );
 }
