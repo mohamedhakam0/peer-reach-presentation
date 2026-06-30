@@ -107,97 +107,123 @@ function SlideNumber({ current }: { current: number }) {
 
 // ─── Result Slide A: MDR vs Distance bar chart ───────────────────────────────
 function MDRChart({ active }: { active: boolean }) {
+  // Exact values from Table 8.1
   const bars = [
-    { label: '1 cm',      mdr: 100, ack: 100 },
-    { label: '30 cm (W)', mdr: 100, ack: 80,  wall: true },
-    { label: '1 m',       mdr: 60,  ack: 60  },
-    { label: '6 m (W)',   mdr: 100, ack: 18,  wall: true },
-    { label: '10 m',      mdr: 92,  ack: 53  },
-    { label: '15 m',      mdr: 100, ack: 0,   ackNA: true },
-    { label: '20 m',      mdr: 100, ack: 40  },
-    { label: '30 m',      mdr: 87,  ack: 17  },
+    { label: '1 cm',       mdr: 100,  ack: 100,  sent: 50, deliv: 50, coldStarts: 0  },
+    { label: '30 cm',      mdr: 100,  ack: 82.4, sent: 50, deliv: 50, coldStarts: 0,  wall: true },
+    { label: '1 m',        mdr: 100,  ack: 60.0, sent: 50, deliv: 50, coldStarts: 1  },
+    { label: '6 m',        mdr: 100,  ack: 16.7, sent: 50, deliv: 50, coldStarts: 3,  wall: true },
+    { label: '10 m',       mdr: 93,   ack: 51.7, sent: 50, deliv: 46, coldStarts: 0  },
+    { label: '15 m',       mdr: 100,  ack: 45,   sent: 50, deliv: 50, coldStarts: 0,  manual: true },
+    { label: '20 m',       mdr: 100,  ack: 40.6, sent: 50, deliv: 50, coldStarts: 2  },
+    { label: '30 m',       mdr: 86.7, ack: 16.7, sent: 50, deliv: 42, coldStarts: 11 },
   ];
-  const W = 820, H = 320, PL = 54, PR = 20, PT = 24, PB = 56;
+
+  const W = 860, H = 300, PL = 48, PR = 16, PT = 32, PB = 48;
   const chartW = W - PL - PR;
   const chartH = H - PT - PB;
   const groupW = chartW / bars.length;
-  const bw = groupW * 0.28;
+  const bw = groupW * 0.3;
   const yTicks = [0, 20, 40, 60, 80, 100];
 
   return (
-    <div className={`res-chart-wrap ${active ? 'is-active' : ''}`}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', transform: 'scale(1.4)', marginTop: '45px' }}>
-        {/* Y-axis grid + labels */}
+    <div className={`res-chart-wrap mdr-chart-wrap ${active ? 'is-active' : ''}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%' }}>
+        {/* Y grid + labels */}
         {yTicks.map(v => {
           const y = PT + chartH - (v / 100) * chartH;
           return (
             <g key={v}>
               <line x1={PL} y1={y} x2={W - PR} y2={y}
-                stroke="var(--intro-border-soft)" strokeWidth="0.6" strokeDasharray={v === 0 ? '0' : '3 3'} />
+                stroke="var(--intro-border-soft)" strokeWidth={v === 0 ? 1 : 0.6}
+                strokeDasharray={v === 0 ? '0' : '3 3'} />
               <text x={PL - 6} y={y + 4} textAnchor="end"
                 fill="var(--intro-text-faint)" fontSize="9" fontFamily="var(--font-mono,monospace)">{v}</text>
             </g>
           );
         })}
-        {/* Y axis label */}
-        <text x={12} y={PT + chartH / 2} textAnchor="middle"
-          fill="var(--intro-text-muted)" fontSize="10" fontFamily="var(--font-mono,monospace)"
-          transform={`rotate(-90, 12, ${PT + chartH / 2})`}>MDR (%)</text>
+        {/* Y label */}
+        <text x={10} y={PT + chartH / 2} textAnchor="middle"
+          fill="var(--intro-text-muted)" fontSize="9" fontFamily="var(--font-mono,monospace)"
+          transform={`rotate(-90, 10, ${PT + chartH / 2})`}>MDR (%)</text>
 
         {/* Bars */}
         {bars.map((b, i) => {
-          const gx = PL + i * groupW;
-          const cx = gx + groupW / 2;
+          const cx = PL + i * groupW + groupW / 2;
           const mdrH = (b.mdr / 100) * chartH;
           const ackH = (b.ack / 100) * chartH;
-          const delay = active ? `${i * 80}ms` : '0ms';
+          const delay = active ? `${i * 70}ms` : '0ms';
+          const xLabelFill = b.wall ? '#f87171' : 'var(--intro-text-muted)';
           return (
             <g key={i}>
-              {/* Packet MDR bar (cyan/blue) */}
-              <rect
-                x={cx - bw - 2} y={PT + chartH - mdrH} width={bw} height={mdrH}
-                fill={CYAN} opacity="0.75" rx="2"
-                style={{ transition: `height 0.5s ease ${delay}, y 0.5s ease ${delay}` }}
-              />
-              {/* ACK-MDR bar (gold) */}
-              {!b.ackNA ? (
-                <rect
-                  x={cx + 2} y={PT + chartH - ackH} width={bw} height={ackH}
-                  fill={GOLD} opacity="0.75" rx="2"
-                  style={{ transition: `height 0.5s ease ${delay}, y 0.5s ease ${delay}` }}
-                />
-              ) : (
-                /* hatched bar for N/A */
-                <rect x={cx + 2} y={PT + chartH - 8} width={bw} height={8}
-                  fill="none" stroke={GOLD} strokeWidth="1" strokeDasharray="3 2" opacity="0.5" rx="1" />
+              {/* MDR bar */}
+              <rect x={cx - bw - 1.5} y={PT + chartH - mdrH} width={bw} height={mdrH}
+                fill={CYAN} opacity="0.8" rx="2"
+                style={{ transition: `height 0.5s ease ${delay}, y 0.5s ease ${delay}` }} />
+              {/* ACK bar */}
+              <rect x={cx + 1.5} y={PT + chartH - ackH} width={bw} height={ackH}
+                fill={GOLD} opacity="0.8" rx="2"
+                style={{ transition: `height 0.5s ease ${delay}, y 0.5s ease ${delay}` }} />
+              {/* Value labels on top of bars */}
+              {b.mdr < 100 && (
+                <text x={cx - bw / 2 - 1.5} y={PT + chartH - mdrH - 3} textAnchor="middle"
+                  fill={CYAN} fontSize="7.5" fontFamily="var(--font-mono,monospace)" opacity="0.9">{b.mdr}</text>
               )}
+              <text x={cx + bw / 2 + 1.5} y={PT + chartH - ackH - 3} textAnchor="middle"
+                fill={GOLD} fontSize="7.5" fontFamily="var(--font-mono,monospace)" opacity="0.9">{b.ack}</text>
               {/* X label */}
-              <text x={cx} y={PT + chartH + 14} textAnchor="middle"
-                fill={b.wall ? '#f87171' : 'var(--intro-text-muted)'} fontSize="8.5"
-                fontFamily="var(--font-mono,monospace)">{b.label}</text>
+              <text x={cx} y={PT + chartH + 13} textAnchor="middle"
+                fill={xLabelFill} fontSize="8.5" fontFamily="var(--font-mono,monospace)">{b.label}</text>
               {b.wall && (
-                <text x={cx} y={PT + chartH + 25} textAnchor="middle"
-                  fill="#f87171" fontSize="7" fontFamily="var(--font-mono,monospace)">Wall</text>
+                <text x={cx} y={PT + chartH + 24} textAnchor="middle"
+                  fill="#f87171" fontSize="7" fontFamily="var(--font-mono,monospace)">(wall)</text>
+              )}
+              {b.manual && (
+                <text x={cx} y={PT + chartH + 24} textAnchor="middle"
+                  fill="var(--intro-text-faint)" fontSize="7" fontFamily="var(--font-mono,monospace)">(manual)</text>
               )}
             </g>
           );
         })}
 
-        {/* Legend */}
-        <rect x={PL + 10} y={PT + 4} width={10} height={10} fill={CYAN} opacity="0.75" rx="2" />
-        <text x={PL + 24} y={PT + 13} fill="var(--intro-text-dim)" fontSize="9" fontFamily="var(--font-mono,monospace)">Packet MDR</text>
-        <rect x={PL + 100} y={PT + 4} width={10} height={10} fill={GOLD} opacity="0.75" rx="2" />
-        <text x={PL + 114} y={PT + 13} fill="var(--intro-text-dim)" fontSize="9" fontFamily="var(--font-mono,monospace)">ACK-MDR (N/A for 15 m manual)</text>
-
-        {/* X axis */}
+        {/* Axes */}
         <line x1={PL} y1={PT + chartH} x2={W - PR} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
         <line x1={PL} y1={PT} x2={PL} y2={PT + chartH} stroke="var(--intro-border)" strokeWidth="1" />
+
+        {/* Legend */}
+        <rect x={W - 230} y={PT + 4} width={10} height={10} fill={CYAN} opacity="0.8" rx="2" />
+        <text x={W - 216} y={PT + 13} fill="var(--intro-text-dim)" fontSize="9" fontFamily="var(--font-mono,monospace)">Packet MDR</text>
+        <rect x={W - 130} y={PT + 4} width={10} height={10} fill={GOLD} opacity="0.8" rx="2" />
+        <text x={W - 116} y={PT + 13} fill="var(--intro-text-dim)" fontSize="9" fontFamily="var(--font-mono,monospace)">ACK-MDR</text>
       </svg>
 
-      {/* Caption */}
-      <p style={{ textAlign: 'center', fontSize: 15, color: 'var(--intro-text-muted)', marginTop: 35, fontFamily: 'var(--font-mono,monospace)' }}>
-        Packet MDR ≥ 86.7% at all tested distances · ACK-MDR degrades with distance &amp; wall penetration
-      </p>
+      {/* Data table */}
+      <div className="mdr-table-wrap">
+        <table className="mdr-table">
+          <thead>
+            <tr>
+              <th>Distance</th>
+              <th>Sent</th>
+              <th>Delivered</th>
+              <th style={{ color: 'var(--intro-cyan)' }}>MDR (%)</th>
+              <th style={{ color: 'var(--intro-gold)' }}>ACK-MDR (%)</th>
+              <th>Cold Starts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bars.map((b, i) => (
+              <tr key={i} className={b.wall ? 'mdr-row-wall' : b.manual ? 'mdr-row-manual' : ''}>
+                <td>{b.label}{b.wall ? ' (wall)' : b.manual ? ' (manual)' : ''}</td>
+                <td>{b.sent}</td>
+                <td>{b.deliv}</td>
+                <td style={{ color: 'var(--intro-cyan)', fontWeight: 600 }}>{b.mdr}</td>
+                <td style={{ color: 'var(--intro-gold)', fontWeight: 600 }}>{b.ack}</td>
+                <td>{b.coldStarts}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
