@@ -115,9 +115,9 @@ function MDRChart({ active }: { active: boolean }) {
     { label: '30 cm',      mdr: 100,  ack: 82.4, sent: 50, deliv: 50, coldStarts: 0,  wall: true },
     { label: '1 m',        mdr: 100,  ack: 60.0, sent: 50, deliv: 50, coldStarts: 1  },
     { label: '6 m',        mdr: 100,  ack: 16.7, sent: 50, deliv: 50, coldStarts: 3,  wall: true },
-    { label: '10 m',       mdr: 93,   ack: 51.7, sent: 50, deliv: 46, coldStarts: 0  },
+    { label: '10 m',       mdr: 100,   ack: 51.7, sent: 50, deliv: 46, coldStarts: 0  },
     { label: '15 m',       mdr: 100,  ack: 45,   sent: 50, deliv: 50, coldStarts: 0,  manual: true },
-    { label: '20 m',       mdr: 100,  ack: 40.6, sent: 50, deliv: 50, coldStarts: 2  },
+    { label: '20 m',       mdr: 98,  ack: 40.6, sent: 50, deliv: 50, coldStarts: 2  },
     { label: '30 m',       mdr: 86.7, ack: 16.7, sent: 50, deliv: 42, coldStarts: 11 },
     { label: '50 m',       mdr: 70,   ack: 3,    sent: 50, deliv: 35, coldStarts: 0  },
     { label: '100 m',      mdr: 50,   ack: 0,    sent: 50, deliv: 25, coldStarts: 0,  ackNA: true },
@@ -132,7 +132,7 @@ function MDRChart({ active }: { active: boolean }) {
 
   return (
     <div className={`res-chart-wrap mdr-chart-wrap ${active ? 'is-active' : ''}`}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', transform: 'scale(1.4)' }}>
         {/* Y grid + labels */}
         {yTicks.map(v => {
           const y = PT + chartH - (v / 100) * chartH;
@@ -549,7 +549,9 @@ function AbstractSlide() {
   return (
     <div className="abstract-slide">
       <blockquote className="abstract-quote">
-        "A hybrid BLE-LoRa mesh protocol enabling encrypted, infrastructure-free messaging across smartphones and embedded devices — no internet required."
+        "An Offline Bluetooth Low Energy Communication Framework\nfor Multi-Hop Device-to-Device Networking"<br/><br/>
+        Personal story: Ramses
+
       </blockquote>
     </div>
   );
@@ -2206,7 +2208,7 @@ function FloodingAlgorithmSlide({ isActive }: { isActive: boolean }) {
 function CoverSubtitle() {
   const [idx, setIdx] = useState(0);
   const lines = [
-    'An Offline Bluetooth Low Energy Communication Framework\nfor Multi-Hop Device-to-Device Networking',
+    '',
   ];
   return (
     <div className="cover-subtitle-rotate">
@@ -2421,7 +2423,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
   }, [currentSectionIndex]);
   // Security deep dive (index 14 = hook-security-deep)
   useEffect(() => {
-    if (currentSectionIndex === 14) setSecDeepReplayKey(k => k + 1);
+    if (currentSectionIndex === 13) setSecDeepReplayKey(k => k + 1);
   }, [currentSectionIndex]);
 
   // Keyboard navigation
@@ -2593,7 +2595,7 @@ export default function IntroExperience({ onEnterSystem }: { onEnterSystem: () =
         <SectionFrame id="hook-results-mdr" isActive={currentSectionIndex === 15}>
           <div className={`hook-inner intro-content ${dir}`} style={{ width: 'min(900px, 100%)' }}>
             <div className="hook-label">EXPERIMENTAL RESULTS</div>
-            <h2>Message Delivery Ratio vs Distance</h2>
+            <h2>MDR vs Distance</h2>
             <MDRChart active={currentSectionIndex === 15} />
           </div>
         </SectionFrame>
